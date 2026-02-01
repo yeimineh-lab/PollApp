@@ -3,64 +3,119 @@
 ## Project Description
 Simple Poll App is a small full-stack application for creating polls, collecting votes, and viewing results.
 
-The project is intentionally kept simple and focuses on **API design**, **incremental development**, and **clear project structure**, rather than building a complete production system.
+The project is intentionally kept simple and focuses on **API design**, **incremental development**, **separation of concerns**, and **responsible user handling**, rather than building a full production system.
 
-This repository represents an early scaffold of the application, not a fully implemented solution.
+This repository represents an early but functional stage of the application.
 
 ---
 
 ## Purpose and Goal
 The purpose of this project is to demonstrate:
 
-- RESTful-ish API design
-- Clear separation of client and server
+- REST-like API design
+- Clear separation between client, API, authentication, and storage
 - Incremental development using horizontal slices
+- User account handling with explicit consent
+- Data minimization and privacy-aware design
 - API documentation and testing
-- Proper use of Git and project management tools
+- Proper use of Git and project structure
 
-The goal is to show **how the system is designed and structured**, not to fully implement all features.
+The goal is to show **how the system is designed, structured, and reasoned about**, not to build a complete commercial product.
 
 ---
 
-## Feature Map (Prioritized)
+## Feature Map
 
-### Core Features (Implemented as API scaffold)
+### Poll Features
 - Create a poll with a question and multiple options
 - List available polls
 - Vote on a poll
 - View poll results
 
-> All core features are currently implemented as **stub endpoints** without persistent storage.
-
-### Planned Features (Not part of this assignment)
-- User registration and authentication
-- Poll ownership
-- Persistent data storage (PostgreSQL)
-- Prevent multiple votes per user
+Polls are persisted using JSON storage (no database).
 
 ---
 
-## Development Plan – Horizontal Slices
+## User Accounts (Assignment Focus)
 
-The project follows a **horizontal slice** approach, where each version results in a runnable application with limited functionality.
+### Data Minimization (GDPR)
+The application stores the minimum required to support user accounts:
 
-### v0.0.1 – API Scaffold (Current)
-- Express server setup
-- REST-like API structure
-- Poll-related endpoints with stub responses
-- OpenAPI documentation
-- API testing setup using Bruno
+- `id` (UUID)
+- `username` (public handle)
+- `passwordHash` (bcrypt hash, never plain text)
+- `createdAt`
+- Consent records:
+  - Terms of Service acceptedAt + version
+  - Privacy Policy acceptedAt + version
 
-Future versions are planned but not implemented as part of this assignment.
+The application **does not** collect:
+- Real name
+- Email address
+- Location data
+- Analytics identifiers
+
+---
+
+### Account Endpoints
+
+- **POST `/api/v1/users`**  
+  Creates a user account.  
+  Requires explicit consent: `tosAccepted: true`.
+
+- **POST `/api/v1/auth/login`**  
+  Authenticates a user and returns a bearer token.
+
+- **GET `/api/v1/auth/me`**  
+  Returns the currently authenticated user.
+
+- **DELETE `/api/v1/users/me`**  
+  Deletes the user’s personal data and withdraws consent.
+
+---
+
+### Personal Data vs Public Contributions
+When a user deletes their account:
+
+- All **personal account data** is removed from storage
+- **Public contributions** (polls) remain available
+- Poll ownership is anonymized:
+  - `ownerId` is set to `null`
+  - `ownerUsername` is replaced with `"deleted-user"`
+
+This preserves application integrity while respecting user privacy.
+
+---
+
+## Consent Handling
+- Users must actively accept the Terms of Service and Privacy Policy to create an account
+- Consent timestamps and document versions are stored
+- Users can withdraw consent at any time by deleting their account
+- Deleting an account invalidates the authentication token immediately
+
+---
+
+## Architecture Notes
+The project follows separation of concerns:
+
+- **Routes** define HTTP endpoints
+- **Auth middleware** handles authentication and authorization
+- **Storage layer** abstracts persistence (JSON files)
+- **Client** is a simple HTML interface consuming the API
+
+Authentication is token-based and intentionally simple to support learning goals.
+
+---
+
+## Development Approach – Horizontal Slices
+The project was developed using a horizontal slice approach, where each step results in a runnable system.
+
+Initial poll endpoints were implemented as stubs and later extended with persistence and user ownership as part of the user assignment.
 
 ---
 
 ## API Documentation
-
-The backend exposes a REST-like API for managing polls.
-
-The API is documented using **OpenAPI 3.0**:
-
+The API is documented using **OpenAPI 3.0**.
 
 The OpenAPI specification describes:
 - Available endpoints
@@ -68,24 +123,16 @@ The OpenAPI specification describes:
 - Example payloads
 - HTTP status codes
 
-The API is intentionally scaffolded and does not persist data.
-
 ---
 
 ## API Testing
-
 API requests are tested using **Bruno**.
 
-The Bruno collection is included in the repository:
-
-
-The collection contains requests for:
-- List polls
-- Create poll
-- Vote on poll
-- Get poll results
-
-A local environment is configured using a base URL variable.
+The Bruno collection includes requests for:
+- Poll operations
+- User creation
+- Authentication
+- Account deletion
 
 ---
 
@@ -93,54 +140,56 @@ A local environment is configured using a base URL variable.
 
 simple-poll-app/
 ├── client/
+│ └── index.html
 ├── server/
 │ ├── src/
 │ │ ├── routes/
-│ │ ├── controllers/
+│ │ ├── auth/
+│ │ ├── storage/
 │ │ └── docs/
-│ │ └── openapi.yaml
+│ ├── data/
 │ └── bruno/
+├── TERMS.md
+├── PRIVACY.md
 ├── README.md
 
 
-- `client/` contains the frontend (not implemented)
-- `server/` contains the backend API
-- `docs/` contains OpenAPI documentation
-- `bruno/` contains API test collections
-
 ---
 
-## Project Management
+## How to Run
 
-GitHub Projects is used for project management.
+### Server
+```bash
+cd server
+node src/index.js
 
-A simple Kanban board is set up with the following columns:
-- Todo
-- In Progress
-- Done
+Client
 
-Tasks are grouped to reflect development steps and horizontal slices.
+Open in browser:
 
----
+http://localhost:3000/index.html
 
-## Git Workflow
+Legal Documents
 
-The project follows a structured Git workflow:
-- Small, focused commits
-- One logical change per commit
-- Clear and descriptive commit messages
+Terms of Service: http://localhost:3000/TERMS.md
 
-This demonstrates good Git practices and incremental development.
+Privacy Policy: http://localhost:3000/PRIVACY.md
 
----
+Reflection
 
-## Reflection
-
-This project was developed as part of an assignment focusing on API design and project structure.
+This project was developed as part of an assignment focused on user handling, privacy, and API architecture.
 
 Key takeaways:
-- Designing the API first clarified responsibilities between client and server
-- OpenAPI made the API easier to reason about and communicate
-- Using Bruno ensured the API could be tested independently of the client
 
-The project is intentionally incomplete and serves as a foundation for further development.
+Explicit consent handling influences both API and client design
+
+Separating personal data from public contributions is critical
+
+Designing deletion flows early prevents architectural issues later
+
+Even simple authentication schemes require careful reasoning
+
+The project provides a solid foundation for future expansion while remaining intentionally minimal and understandable.
+
+
+

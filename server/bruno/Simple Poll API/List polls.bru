@@ -5,18 +5,12 @@ meta {
 }
 
 get {
-  url: '''
-    {{baseUrl}}/polls
-    {{baseUrl}}/polls
-    {{baseUrl}}/polls
-    {{baseUrl}}/polls
-    {{baseUrl}}/polls
-    {{baseUrl}}/polls
-'''
+  url: {{baseUrl}}/polls
   body: none
   auth: inherit
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

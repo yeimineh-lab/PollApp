@@ -1,11 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Simple Poll App</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    section { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin: 16px 0; }
+    label { display: block; margin: 8px 0 4px; }
+    input { width: 100%; padding: 10px; box-sizing: border-box; }
+    button { margin-top: 10px; padding: 10px 12px; cursor: pointer; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    pre { background: #111; color: #0f0; padding: 12px; border-radius: 10px; overflow: auto; }
+    small { color: #555; }
+  </style>
 </head>
 <body>
   <h1>Simple Poll App</h1>
-  <p>Project scaffold is working.</p>
+  <p><small>API base: <code>http://localhost:3000/api/v1</code></small></p>
+
+  <section>
+    <h2>Create account</h2>
+    <form id="signupForm">
+      <label for="suUsername">Username</label>
+      <input id="suUsername" placeholder="username" required />
+
+      <label for="suPassword">Password</label>
+      <input id="suPassword" type="password" placeholder="password (min 8 chars)" required />
+
+      <label style="margin-top:10px;">
+        <input id="tos" type="checkbox" />
+        I agree to the <a href="http://localhost:3000/TERMS.md" target="_blank" rel="noreferrer">Terms</a>
+        and <a href="http://localhost:3000/PRIVACY.md" target="_blank" rel="noreferrer">Privacy Policy</a>
+      </label>
+
+      <button type="submit">Sign up</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Login</h2>
+    <form id="loginForm">
+      <label for="liUsername">Username</label>
+      <input id="liUsername" placeholder="username" required />
+
+      <label for="liPassword">Password</label>
+      <input id="liPassword" type="password" placeholder="password" required />
+
+      <button type="submit">Login</button>
+    </form>
+
+    <p>
+      <button id="meBtn" type="button">GET /auth/me</button>
+      <button id="logoutBtn" type="button">POST /auth/logout</button>
+    </p>
+
+    <p><small>Token is stored only in this page’s memory (refresh clears it).</small></p>
+  </section>
+
+  <section>
+    <h2>Delete account</h2>
+    <p>This will delete your user (personal data) and anonymize your polls (public contributions).</p>
+    <button id="deleteBtn" type="button">Delete my account</button>
+  </section>
+
+  <h2>Output</h2>
+  <pre id="out">Ready.</pre>
+
+  <script>
+    const API = "http://localhost:3000/api/v1";
+    const out = document.getElementById("out");
+    let token = null;
+
+    function show(objOrText) {
+      out.textContent = typeof objOrText === "string" ? objOrText : JSON.stringify(objOrText, null, 2);
+    }
+
+    async function apiFetch(path, { method = "GET", body } = {}) {
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const res = await fetch(`${API}${path}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = text; }
+
+      if (!res.ok) {
+        throw { status: res.status, data };
+      }
+      return data;
+    }
+
+    // Signup
+    document.getElementById("signupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = document.getElementById("suUsername").value;
+      const password = document.getElementById("suPassword").value;
+      const tosAccepted = document.getElementById("tos").checked;
+
+      if (!tosAccepted) {
+        show("You must accept the Terms to create an account.");
+        return;
+      }
+
+      try {
+        const data = await apiFetch("/users", { method: "POST", body: { username, password, tosAccepted } });
+        show(data);
+      } catch (err) {
+        show(err);
+      }
+    });
+
+    // Login
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = document.getElementById("liUsername").value;
+      const password = document.getElementById("liPassword").value;
+
+      try {
+        const data = await apiFetch("/auth/login", { method: "POST", body: { username, password } });
+        token = data.token;
+        show({ message: "Logged in", token, user: data.user });
+      } catch (err) {
+        show(err);
+      }
+    });
+
+    // /me
+    document.getElementById("meBtn").addEventListener("click", async () => {
+      try {
+        const data = await apiFetch("/auth/me");
+        show(data);
+      } catch (err) {
+        show(err);
+      }
+    });
+
+    // logout
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try {
+        const data = await apiFetch("/auth/logout", { method: "POST" });
+        token = null;
+        show({ message: "Logged out", result: data });
+      } catch (err) {
+        show(err);
+      }
+    });
+
+    // Delete account
+    document.getElementById("deleteBtn").addEventListener("click", async () => {
+      if (!token) {
+        show("You must be logged in to delete your account.");
+        return;
+      }
+      const ok = confirm("Are you sure? This will delete your account and anonymize your polls.");
+      if (!ok) return;
+
+      try {
+        const data = await apiFetch("/users/me", { method: "DELETE" });
+        token = null;
+        show({ message: "Account deleted", result: data });
+      } catch (err) {
+        show(err);
+      }
+    });
+  </script>
 </body>
 </html>
