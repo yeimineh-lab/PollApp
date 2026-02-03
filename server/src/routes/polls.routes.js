@@ -37,7 +37,7 @@ router.post("/polls", requireAuth(), async (req, res) => {
 
     // ownership (needed for anonymization later)
     ownerId: req.auth.userId,
-    ownerUsername: "testuser", // temporary; we’ll improve next
+    ownerUsername: "testuser", // 
   };
 
   polls.push(poll);
