@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1a2da598-74ee-435a-a2ed-2439b78e5c50",
+    "title": "Middag i kveld",
+    "options": [
+      {
+        "id": "fe402c85-8b03-4e02-bcdd-a22417d6d4f6",
+        "text": "Pizza",
+        "votes": 0
+      },
+      {
+        "id": "a1765e64-64c7-4517-87f1-175b64d93e6a",
+        "text": "Sushi",
+        "votes": 0
+      },
+      {
+        "id": "4f42f403-f539-43f0-b6b5-b1b23acce619",
+        "text": "Burger",
+        "votes": 0
+      }
+    ],
+    "createdAt": "2026-02-05T17:49:15.174Z",
+    "ownerId": "abf3944a-e51e-4b9f-9f82-e4be0b2aabb6",
+    "ownerUsername": "u_42947"
+  }
+]

@@ -1,12 +1,16 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const path = require("path");
+
 const { createJsonStore } = require("../storage/jsonStore");
 const { createSession, deleteSession } = require("../auth/sessions");
 const { requireAuth } = require("../auth/requireAuth");
 
 const router = express.Router();
-const usersStore = createJsonStore("./server/data/users.json", []);
+
+const usersFile = path.join(__dirname, "..", "..", "data", "users.json");
+const usersStore = createJsonStore(usersFile, []);
 
 function normalizeUsername(u) {
   return String(u || "").trim().toLowerCase();

@@ -1,10 +1,16 @@
 const express = require("express");
 const crypto = require("crypto");
+const path = require("path");
 const { createJsonStore } = require("../storage/jsonStore");
 const { requireAuth } = require("../auth/requireAuth");
 
 const router = express.Router();
-const pollsStore = createJsonStore("./server/data/polls.json", []);
+
+const pollsFile = path.join(__dirname, "..", "..", "data", "polls.json");
+const usersFile = path.join(__dirname, "..", "..", "data", "users.json");
+
+const pollsStore = createJsonStore(pollsFile, []);
+const usersStore = createJsonStore(usersFile, []);
 
 // GET /api/v1/polls
 router.get("/polls", async (req, res) => {
@@ -19,25 +25,34 @@ router.post("/polls", requireAuth(), async (req, res) => {
   if (!title || String(title).trim().length < 3) {
     return res.status(400).json({ error: "Poll title must be at least 3 characters." });
   }
+
   if (!Array.isArray(options) || options.length < 2) {
     return res.status(400).json({ error: "Poll must have at least 2 options." });
   }
 
-  const polls = await pollsStore.read();
+  const normalizedOptions = options
+    .map((o) => (typeof o === "string" ? o : o?.text))
+    .map((t) => String(t ?? "").trim())
+    .filter(Boolean);
+
+  if (normalizedOptions.length < 2) {
+    return res.status(400).json({ error: "Poll must have at least 2 valid options." });
+  }
+
+  const [polls, users] = await Promise.all([pollsStore.read(), usersStore.read()]);
+  const owner = users.find((u) => u.id === req.auth.userId);
 
   const poll = {
     id: crypto.randomUUID(),
     title: String(title).trim(),
-    options: options.map((o) => ({
+    options: normalizedOptions.map((text) => ({
       id: crypto.randomUUID(),
-      text: String(o).trim(),
+      text,
       votes: 0,
     })),
     createdAt: new Date().toISOString(),
-
-    // ownership (needed for anonymization later)
     ownerId: req.auth.userId,
-    ownerUsername: "testuser", // 
+    ownerUsername: owner?.username ?? "unknown",
   };
 
   polls.push(poll);
