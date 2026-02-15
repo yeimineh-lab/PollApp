@@ -1,10 +1,14 @@
-﻿Simple Poll App – User Client
+﻿# Simple Poll App – User Client
 
 This project is a simple full-stack application with a Node.js backend and a structured client built using Web Components.
 
 The goal of this assignment was to build a client in a structured way that interacts with an existing User API.
 
-Project Structure
+---
+
+## Project Structure
+
+```text
 simple-poll-app/
 │
 ├── server/
@@ -34,30 +38,27 @@ simple-poll-app/
 │
 └── README.md
 
-Architecture Decisions
+Architecture
 
-The client is structured with separation of concerns:
+The client is structured with separation of concerns.
 
 UI Layer
 
 Custom Web Components:
 
-<user-create>
+user-create
 
-<user-edit>
+user-edit
 
-<user-delete>
+user-delete
 
-Each component handles only DOM and user interaction.
+Each component only handles DOM and user interaction.
 
 Data Layer
 
-api.mjs contains the single fetch() call used by the entire client.
+api.mjs contains the only fetch() call used in the client.
 
-All API requests go through:
-
-request(path, options)
-
+All API requests go through: request(path, options)
 
 This ensures:
 
@@ -81,40 +82,16 @@ Requirements Checklist
 ✔ Only one fetch() in the client
 ✔ No duplicated data object structures
 ✔ Separation of UI, Logic, and Data
-✔ Custom web components for:
-
-Creating users
-
-Editing users
-
-Deleting users
+✔ Custom Web Components for creating, editing and deleting users
 ✔ Client communicates with API successfully
 
 How to Run
-
-Install dependencies:
-
 cd server
 npm install
-
-
-Start development server:
-
 npm run dev
 
 
-Server runs on:
+Server runs at:
 
 http://localhost:3000
 
-
-The client is served from the public folder.
-
-Reflection
-
-For this assignment I focused on creating a clear architecture early.
-Using a small store with the observer pattern helped avoid tightly coupling UI to API calls.
-
-Separating the fetch gateway from business logic made the application easier to reason about and extend.
-
-This structure also makes future features easier to add without rewriting core parts of the system.
