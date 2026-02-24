@@ -1,49 +1,58 @@
-﻿Simple Poll App
+﻿# PollApp
 
-A simple REST-based poll application built with Node.js and Express using ESM modules.
+A simple REST-based poll application built with **Node.js** and **Express** using **ESM modules**.
+
+---
+
+## ✨ Features
 
 Users can:
 
-Create an account
+- Create an account
+- Log in and log out
+- Create polls
+- List polls
+- Delete their own account
 
-Log in and log out
+---
 
-Create polls
+## 🛠 Tech Stack
 
-List polls
+- Node.js (ESM only)
+- Express
+- JSON file storage (custom `jsonStore`)
+- REST-style API
+- OpenAPI 3 specification
 
-Delete their own account
+---
 
-Tech Stack
+## 📁 Project Structure
 
-Node.js (ESM only)
 
-Express
-
-JSON file storage (via custom jsonStore)
-
-REST-style API
-
-OpenAPI specification
-
-Project Structure
 server/
-├─ src/
-│  ├─ app.mjs              # Express configuration
-│  ├─ server.mjs           # Server entry point
-│  ├─ routes/              # Route handlers (no business logic)
-│  ├─ services/            # Business logic
-│  ├─ storage/             # JSON storage layer
-│  ├─ auth/                # Session handling
-│  ├─ middleware/          # errorHandler, notFound, requireJson
-│  ├─ domain/              # AppError subclasses
-│  └─ config/              # Path configuration
-├─ data/                   # JSON data files
-├─ public/                 # Frontend files
-└─ docs/
-   └─ openapi.yaml         # API specification
+│
+├── src/
+│ ├── app.mjs # Express configuration
+│ ├── server.mjs # Server entry point
+│ ├── routes/ # Route handlers (no business logic)
+│ ├── services/ # Business logic
+│ ├── storage/ # JSON storage layer
+│ ├── auth/ # Session handling
+│ ├── middleware/ # errorHandler, notFound, requireAuth
+│ ├── domain/ # AppError subclasses
+│ └── config/ # Path configuration
+│
+├── data/ # JSON data files
+├── public/ # Frontend files
+├── docs/ # Documentation
+│ └── openapi.yaml
 
-How to Run Locally
+
+---
+
+## 🚀 How to Run Locally
+
+```bash
 cd server
 npm install
 npm start
@@ -51,34 +60,30 @@ npm start
 Server runs at:
 
 http://localhost:3000
-
-Health check:
-
+🩺 Health Check
 http://localhost:3000/health
-
-API base:
-
+🔗 API Base
 http://localhost:3000/api/v1
-API Documentation
 
 The API is documented using OpenAPI 3.
 
 OpenAPI file:
 
 server/docs/openapi.yaml
-
-Architecture
+🏗 Architecture
 
 ESM-only backend (no CommonJS)
 
-Clear separation of concerns:
+Clear separation of concerns
 
-Routes: HTTP layer only
+Layers
 
-Services: business logic
+Routes → HTTP layer only
 
-Storage: persistence layer
+Services → Business logic
 
-Centralized error handling using custom AppError subclasses
+Storage → JSON persistence
 
-JSON-based persistence via custom storage abstraction
+Middleware → Error & auth handling
+
+Domain → Custom error classes
