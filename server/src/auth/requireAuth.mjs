@@ -1,4 +1,4 @@
-import { getSessionUserId } from "./sessions.js";
+import { getSessionUserId } from "./sessions.mjs";
 
 export function requireAuth() {
   return (req, res, next) => {

@@ -1,6 +1,6 @@
 import express from "express";
-import { requireAuth } from "../auth/requireAuth.js";
-import * as pollsService from "../services/polls.service.js";
+import { requireAuth } from "../auth/requireAuth.mjs";
+import * as pollsService from "../services/polls.service.mjs";
 
 const router = express.Router();
 

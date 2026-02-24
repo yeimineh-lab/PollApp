@@ -1,6 +1,6 @@
 import express from "express";
-import { requireAuth } from "../auth/requireAuth.js";
-import * as authService from "../services/auth.service.js";
+import { requireAuth } from "../auth/requireAuth.mjs";
+import * as authService from "../services/auth.service.mjs";
 
 const router = express.Router();
 

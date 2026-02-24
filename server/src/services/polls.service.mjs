@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createJsonStore } from "../storage/jsonStore.js";
+import { createJsonStore } from "../storage/jsonStore.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

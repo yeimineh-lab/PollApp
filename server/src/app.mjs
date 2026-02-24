@@ -1,13 +1,12 @@
 ﻿import express from "express";
 
-import pollsRoutes from "./routes/polls.routes.js";
-import usersRoutes from "./routes/users.routes.js";
-import authRoutes from "./routes/auth.routes.js";
+import pollsRoutes from "./routes/polls.routes.mjs";
+import usersRoutes from "./routes/users.routes.mjs";
+import authRoutes from "./routes/auth.routes.mjs";
 
-import notFound from "./middleware/notFound.js";
-import errorHandler from "./middleware/errorHandler.js";
-
-import { PUBLIC_DIR } from "./config/paths.js";
+import notFound from "./middleware/notFound.mjs";
+import errorHandler from "./middleware/errorHandler.mjs";
+import { PUBLIC_DIR } from "./config/paths.mjs";
 
 const app = express();
 
