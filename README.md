@@ -28,25 +28,23 @@ Users can:
 
 ## 📁 Project Structure
 
-
+```text
 server/
-│
 ├── src/
-│ ├── app.mjs # Express configuration
-│ ├── server.mjs # Server entry point
-│ ├── routes/ # Route handlers (no business logic)
-│ ├── services/ # Business logic
-│ ├── storage/ # JSON storage layer
-│ ├── auth/ # Session handling
-│ ├── middleware/ # errorHandler, notFound, requireAuth
-│ ├── domain/ # AppError subclasses
-│ └── config/ # Path configuration
+│   ├── app.mjs              # Express configuration
+│   ├── server.mjs           # Server entry point
+│   ├── routes/              # Route handlers (no business logic)
+│   ├── services/            # Business logic
+│   ├── storage/             # JSON storage layer
+│   ├── auth/                # Session handling
+│   ├── middleware/          # errorHandler, notFound, requireAuth
+│   ├── domain/              # AppError subclasses
+│   └── config/              # Path configuration
 │
-├── data/ # JSON data files
-├── public/ # Frontend files
-├── docs/ # Documentation
-│ └── openapi.yaml
-
+├── data/                    # JSON data files
+├── public/                  # Frontend files
+├── docs/                    # Documentation
+│   └── openapi.yaml
 
 ---
 
