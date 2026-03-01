@@ -1,18 +1,10 @@
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 
-import { createJsonStore } from "../storage/jsonStore.mjs";
 import { createSession, deleteSession } from "../auth/sessions.mjs";
 import { AuthError, NotFoundError } from "../domain/errors.mjs";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// __dirname = server/src/services
-const usersFile = path.join(__dirname, "..", "..", "data", "users.json");
-const usersStore = createJsonStore(usersFile, []);
+import { getUserByUsername, getUserById } from "../storage/users.pgStore.mjs";
 
 function normalizeUsername(u) {
   return String(u || "").trim().toLowerCase();
@@ -22,15 +14,15 @@ export async function login({ username, password }) {
   const u = normalizeUsername(username);
   const p = String(password || "");
 
-  const users = await usersStore.read();
-  const user = users.find((x) => x.username === u);
+  const user = await getUserByUsername(u);
 
   // Do not reveal whether user exists
   if (!user) {
     throw new AuthError("Invalid credentials");
   }
 
-  const ok = await bcrypt.compare(p, user.passwordHash);
+  // Postgres felt: password_hash
+  const ok = await bcrypt.compare(p, user.password_hash);
   if (!ok) {
     throw new AuthError("Invalid credentials");
   }
@@ -42,8 +34,7 @@ export async function login({ username, password }) {
 }
 
 export async function me({ userId }) {
-  const users = await usersStore.read();
-  const user = users.find((x) => x.id === userId);
+  const user = await getUserById(userId);
 
   if (!user) {
     throw new NotFoundError("User not found");
@@ -52,7 +43,7 @@ export async function me({ userId }) {
   return {
     id: user.id,
     username: user.username,
-    createdAt: user.createdAt,
+    createdAt: user.created_at,
     consent: user.consent,
   };
 }
