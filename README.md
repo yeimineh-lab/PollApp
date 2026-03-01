@@ -64,6 +64,8 @@ GET http://localhost:3000/health
 API Base URL
 http://localhost:3000/api/v1
 
+Live URL: https://pollapp-9tz7.onrender.com
+
 API Documentation
 
 The API is documented using OpenAPI 3.
