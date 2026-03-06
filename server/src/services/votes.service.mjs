@@ -10,7 +10,7 @@ export async function voteOnPoll({ pollId, userId, optionIndex }) {
     throw new ValidationError("Invalid poll id");
   }
 
-  if (!Number.isInteger(userId) || userId <= 0) {
+  if (typeof userId !== "string" || userId.length === 0) {
     throw new ValidationError("Invalid user id");
   }
 

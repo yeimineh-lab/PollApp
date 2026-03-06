@@ -11,7 +11,7 @@ const router = express.Router();
 router.post("/polls/:id/vote", requireAuth(), async (req, res, next) => {
   try {
     const pollId = Number(req.params.id);
-    const userId = Number(req.auth.userId);
+    const userId = req.auth.userId;
     const optionIndex = Number(req.body.optionIndex);
 
     const vote = await voteOnPoll({ pollId, userId, optionIndex });
