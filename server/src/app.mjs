@@ -17,20 +17,36 @@ import errorHandler from "./middleware/errorHandler.mjs";
 // App config
 import { PUBLIC_DIR } from "./config/paths.mjs";
 
+// Language (i18n)
+import { getLanguage, t } from "./i18n/index.js";
+
 const app = express();
 
 // Parse JSON request bodies
 app.use(express.json());
 
+// Detect browser language
+app.use((req, res, next) => {
+  const lang = getLanguage(req.headers["accept-language"]);
+  req.lang = lang;
+  req.t = (key) => t(lang, key);
+  next();
+});
+
 // Require application/json for non-GET API requests
 app.use(requireJson);
 
-// Serve static frontend files from /public
+// Serve static frontend files
 app.use(express.static(PUBLIC_DIR));
 
-// Simple health check endpoint
+// Health check
 app.get("/health", (req, res) => {
   res.json({ ok: true });
+});
+
+// Test route for i18n errors
+app.get("/test-error", (req, res, next) => {
+  next({ status: 500 });
 });
 
 // API routes
@@ -39,10 +55,10 @@ app.use("/api/v1", usersRoutes);
 app.use("/api/v1", authRoutes);
 app.use("/api/v1", votesRoutes);
 
-// Handle unknown routes
+// Unknown routes
 app.use(notFound);
 
-// Handle application errors
+// Error handler
 app.use(errorHandler);
 
 export default app;

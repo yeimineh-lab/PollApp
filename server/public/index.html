@@ -3,8 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Simple Poll – Users</title>
+    <title>Simple Poll - Users</title>
     <link rel="stylesheet" href="./app.css" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#2563eb" />
     <script type="module" src="./app.mjs"></script>
   </head>
 
@@ -12,12 +14,12 @@
     <div class="container">
       <header>
         <div>
-          <h1>Users</h1>
-          <p class="subtitle">
-            Relative API paths (f.eks. <code>/api/v1/users</code>). Token lagres kun i minnet.
+          <h1 data-i18n="mainTitle">Users</h1>
+          <p class="subtitle" data-i18n="subtitle">
+            Relative API paths (e.g. <code>/api/v1/users</code>). Token is stored in memory only.
           </p>
         </div>
-        <span class="badge"><span class="dot"></span> local:3000</span>
+        <span class="badge" data-i18n="localBadge"><span class="dot"></span> local:3000</span>
       </header>
 
       <main class="grid">
@@ -34,8 +36,8 @@
         </section>
 
         <section class="card col-12">
-          <h2>Status</h2>
-          <div id="status" class="status"></div>
+          <h2 data-i18n="statusTitle">Status</h2>
+          <div id="status" class="status" aria-live="polite"></div>
         </section>
       </main>
     </div>
