@@ -100,3 +100,68 @@ Middleware
 
 Domain
 → Custom error classes (e.g., AppError subclasses)
+
+
+## Additional Features (Assignment Implementation)
+
+The application was extended with the following features:
+
+### Internationalization (I18n)
+
+The frontend supports **English and Norwegian**.
+
+- Language is detected automatically using `navigator.language`
+- Translation files are located in:
+  - `public/i18n/en.mjs`
+  - `public/i18n/no.mjs`
+- UI labels and validation messages change based on the browser language
+- Server errors also respect the `Accept-Language` header
+
+---
+
+### Progressive Web App (PWA)
+
+The application can be installed as a PWA.
+
+Implemented using:
+
+- `manifest.webmanifest`
+- `service-worker.js`
+- application icons
+
+---
+
+### Service Worker Caching
+
+A service worker caches important files such as:
+
+- `index.html`
+- `app.css`
+- `app.mjs`
+- `manifest.webmanifest`
+- icons
+
+This improves loading performance and allows the application to function without network access.
+
+---
+
+### Offline Mode
+
+If the network is unavailable:
+
+- cached files are served
+- an offline fallback page (`offline.html`) is displayed
+
+---
+
+### Accessibility
+
+Accessibility was tested using **Lighthouse**.
+
+Results:
+
+- Accessibility: **93**
+- Best Practices: **100**
+- SEO: **90**
+
+This meets the assignment requirement of **minimum 90 accessibility score**.
