@@ -11,7 +11,20 @@ import {
   insertUser,
   updateUser,
   deleteUserById,
+  listUsers,
 } from "../storage/users.pgStore.mjs";
+
+// Return a safe overview of all registered users
+export async function getUsers() {
+  const users = await listUsers();
+
+  return users.map((user) => ({
+    id: user.id,
+    username: user.username,
+    createdAt: user.created_at,
+    consent: user.consent,
+  }));
+}
 
 // Create a new user with validation, password hashing, and consent tracking
 export async function createUser(input) {

@@ -1,6 +1,9 @@
 ﻿// Import the application state store that holds user data and status
 import { userStore } from "./data/userStore.mjs";
 
+// Import the shared API request helper
+import { request } from "./data/api.mjs";
+
 // Import UI components used in the page
 import "./ui/user-create.mjs";
 import "./ui/user-edit.mjs";
@@ -9,8 +12,9 @@ import "./ui/user-delete.mjs";
 // Import shared i18n functions
 import { t, detectLanguage } from "./i18n/index.mjs";
 
-// Select the HTML element where system status will be displayed
+// Select HTML elements used by the page
 const statusEl = document.querySelector("#status");
+const usersListEl = document.querySelector("#usersList");
 
 // Store the detected language
 const currentLang = detectLanguage();
@@ -82,6 +86,44 @@ function renderStatus() {
   `;
 }
 
+// Render a message when no user list can be shown
+function renderUsersMessage(message) {
+  if (!usersListEl) return;
+  usersListEl.innerHTML = `<li>${escapeHtml(message)}</li>`;
+}
+
+// Load and render the list of registered users
+async function loadUsers() {
+  if (!usersListEl) return;
+
+  const { token } = userStore.state;
+
+  if (!token) {
+    renderUsersMessage("Log in to view registered users.");
+    return;
+  }
+
+  try {
+    const users = await request("/api/v1/users", { token });
+
+    if (!Array.isArray(users) || users.length === 0) {
+      renderUsersMessage("No registered users found.");
+      return;
+    }
+
+    usersListEl.innerHTML = users
+      .map(
+        (user) =>
+          `<li><strong>${escapeHtml(user.username)}</strong> — ${escapeHtml(
+            new Date(user.createdAt).toLocaleString()
+          )}</li>`
+      )
+      .join("");
+  } catch (error) {
+    renderUsersMessage(error.message || "Failed to load users.");
+  }
+}
+
 // Register the service worker for caching and offline support
 async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
@@ -94,15 +136,19 @@ async function registerServiceWorker() {
   }
 }
 
-// Initialize translations, status rendering, and service worker registration
+// Initialize translations, status rendering, user loading, and service worker registration
 function init() {
   applyTranslations();
   renderStatus();
+  loadUsers();
   registerServiceWorker();
 }
 
-// Update the status panel when the store state changes
-userStore.addEventListener("change", renderStatus);
+// Update the UI when the store state changes
+userStore.addEventListener("change", () => {
+  renderStatus();
+  loadUsers();
+});
 
 // Run the application setup
 init();

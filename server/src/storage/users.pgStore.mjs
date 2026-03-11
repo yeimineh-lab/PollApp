@@ -45,3 +45,12 @@ export async function updateUser({ id, username, passwordHash }) {
 export async function deleteUserById(id) {
   await pool.query(`DELETE FROM users WHERE id = $1`, [id]);
 }
+
+export async function listUsers() {
+  const r = await pool.query(
+    `SELECT id, username, created_at, consent
+     FROM users
+     ORDER BY created_at DESC`
+  );
+  return r.rows;
+}
