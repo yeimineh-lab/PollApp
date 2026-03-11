@@ -34,8 +34,6 @@ class UserDelete extends HTMLElement {
             ${t("deleteMyAccount")}
           </button>
         </div>
-
-        <small class="muted">${t("calling")}: <code>DELETE /api/v1/users/me</code></small>
       </section>
     `;
 

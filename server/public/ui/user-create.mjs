@@ -24,26 +24,50 @@ class UserCreate extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <link rel="stylesheet" href="../app.css">
+
       <section class="panel">
         <h2>${t("createUser")}</h2>
 
         <form id="f" novalidate>
+
           <label for="username">${t("username")}</label>
-          <input id="username" name="username" type="text" minlength="3" required />
+          <input 
+            id="username" 
+            name="username" 
+            type="text" 
+            minlength="3" 
+            required
+          />
 
           <label for="password">${t("password")}</label>
-          <input id="password" name="password" type="password" minlength="8" required />
+          <input 
+            id="password" 
+            name="password" 
+            type="password" 
+            minlength="8" 
+            required
+          />
 
-          <label class="row" style="margin-top:10px">
+          <label class="check-row">
             <input name="tosAccepted" type="checkbox" required />
-            <span>${t("acceptTerms")} <a href="/TERMS.MD">${t("terms")}</a> ${t("and")} <a href="/PRIVACY.MD">${t("privacy")}</a></span>
+            <span>
+              ${t("acceptTerms")}
+              <a href="/TERMS.MD">${t("terms")}</a>
+              ${t("and")}
+              <a href="/PRIVACY.MD">${t("privacy")}</a>
+            </span>
           </label>
 
-          <div class="row" style="margin-top:12px">
-            <button class="primary" type="submit" ${status === "loading" ? "disabled" : ""}>${t("signUp")}</button>
+          <div class="row">
+            <button 
+              class="primary" 
+              type="submit" 
+              ${status === "loading" ? "disabled" : ""}
+            >
+              ${t("signUp")}
+            </button>
           </div>
 
-          <small class="muted">${t("calling")}: <code>POST /api/v1/users</code></small>
         </form>
       </section>
     `;

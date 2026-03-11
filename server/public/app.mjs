@@ -1,25 +1,21 @@
-﻿// Import the application state store that holds user data and status
-import { userStore } from "./data/userStore.mjs";
-
-// Import the shared API request helper
+﻿import { userStore } from "./data/userStore.mjs";
 import { request } from "./data/api.mjs";
-
-// Import UI components used in the page
 import "./ui/user-create.mjs";
 import "./ui/user-edit.mjs";
-import "./ui/user-delete.mjs";
-
-// Import shared i18n functions
 import { t, detectLanguage } from "./i18n/index.mjs";
 
-// Select HTML elements used by the page
-const statusEl = document.querySelector("#status");
 const usersListEl = document.querySelector("#usersList");
+const authView = document.querySelector("#authView");
+const appView = document.querySelector("#appView");
+const pageHeadingEl = document.querySelector("#pageHeading");
+const pageSubtitleEl = document.querySelector("#pageSubtitle");
+const showLoginBtn = document.querySelector("#showLoginBtn");
+const showSignupBtn = document.querySelector("#showSignupBtn");
+const loginPanel = document.querySelector("#loginPanel");
+const signupPanel = document.querySelector("#signupPanel");
 
-// Store the detected language
 const currentLang = detectLanguage();
 
-// Escape HTML characters to prevent XSS
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
     "&": "&amp;",
@@ -30,22 +26,17 @@ function escapeHtml(s) {
   }[c]));
 }
 
-// Apply translations to HTML elements using data-i18n attributes
 function applyTranslations() {
-  // Set the language attribute on the HTML document
   document.documentElement.lang = currentLang;
 
-  // Update the page title
   const titleEl = document.querySelector("title");
   if (titleEl) {
     titleEl.textContent = t("pageTitle");
   }
 
-  // Replace text in elements that contain data-i18n
   document.querySelectorAll("[data-i18n]").forEach((element) => {
     const key = element.dataset.i18n;
 
-    // Special case for badge containing an icon
     if (key === "localBadge") {
       element.innerHTML = `<span class="dot"></span> ${escapeHtml(t(key))}`;
       return;
@@ -55,44 +46,44 @@ function applyTranslations() {
   });
 }
 
-// Render the application status panel
-function renderStatus() {
-  if (!statusEl) return;
+function renderHeader() {
+  const { token, me } = userStore.state;
+  const headerContent = pageHeadingEl?.parentElement;
 
-  // Read current state from the store
-  const { status, error, token, me, lastAction } = userStore.state;
+  if (!pageHeadingEl || !pageSubtitleEl || !headerContent) return;
 
-  // Create a formatted status object
-  const pretty = {
-    status,
-    error,
-    token: token ? t("inMemory") : null,
-    me,
-    lastAction: lastAction ?? null,
-    time: new Date().toLocaleTimeString(),
-  };
-
-  // Render status HTML
-  statusEl.innerHTML = `
-    <div class="status-top">
-      <span class="pill ${escapeHtml(status)}">${escapeHtml(status)}</span>
-      ${
-        error
-          ? `<span class="pill error">${escapeHtml(t("errorLabel"))}: ${escapeHtml(error)}</span>`
-          : `<span class="pill ok">${escapeHtml(t("okLabel"))}</span>`
-      }
-    </div>
-    <pre class="status-pre">${escapeHtml(JSON.stringify(pretty, null, 2))}</pre>
-  `;
+  if (token && me?.username) {
+    pageHeadingEl.textContent = me.username;
+    pageSubtitleEl.textContent = "";
+    pageSubtitleEl.classList.add("hidden");
+    headerContent.classList.remove("auth-header-center");
+  } else {
+    pageHeadingEl.textContent = "";
+    pageSubtitleEl.textContent = "Log in or create an account to continue.";
+    pageSubtitleEl.classList.remove("hidden");
+    headerContent.classList.add("auth-header-center");
+  }
 }
 
-// Render a message when no user list can be shown
+function updateView() {
+  const { token } = userStore.state;
+
+  if (!authView || !appView) return;
+
+  if (token) {
+    authView.classList.add("hidden");
+    appView.classList.remove("hidden");
+  } else {
+    authView.classList.remove("hidden");
+    appView.classList.add("hidden");
+  }
+}
+
 function renderUsersMessage(message) {
   if (!usersListEl) return;
   usersListEl.innerHTML = `<li>${escapeHtml(message)}</li>`;
 }
 
-// Load and render the list of registered users
 async function loadUsers() {
   if (!usersListEl) return;
 
@@ -124,31 +115,49 @@ async function loadUsers() {
   }
 }
 
-// Register the service worker for caching and offline support
+function activateAuthTab(tab) {
+  if (!showLoginBtn || !showSignupBtn || !loginPanel || !signupPanel) return;
+
+  const loginActive = tab === "login";
+
+  showLoginBtn.classList.toggle("active", loginActive);
+  showSignupBtn.classList.toggle("active", !loginActive);
+  loginPanel.classList.toggle("hidden", !loginActive);
+  signupPanel.classList.toggle("hidden", loginActive);
+}
+
+function bindAuthTabs() {
+  showLoginBtn?.addEventListener("click", () => activateAuthTab("login"));
+  showSignupBtn?.addEventListener("click", () => activateAuthTab("signup"));
+}
+
 async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
 
   try {
     await navigator.serviceWorker.register("/service-worker.js");
-    console.log("Service worker registered");
   } catch (error) {
     console.error("Service worker registration failed:", error);
   }
 }
 
-// Initialize translations, status rendering, user loading, and service worker registration
-function init() {
+async function init() {
   applyTranslations();
-  renderStatus();
+  activateAuthTab("login");
+  bindAuthTabs();
+
+  await userStore.bootstrap();
+
+  renderHeader();
+  updateView();
   loadUsers();
   registerServiceWorker();
 }
 
-// Update the UI when the store state changes
 userStore.addEventListener("change", () => {
-  renderStatus();
+  renderHeader();
+  updateView();
   loadUsers();
 });
 
-// Run the application setup
 init();
