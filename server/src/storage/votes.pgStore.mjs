@@ -1,6 +1,3 @@
-// votes.pgStore.mjs
-// Handles vote-related PostgreSQL queries.
-
 import { pool } from "./db.mjs";
 
 export async function getVoteByPollAndUser(pollId, userId) {
@@ -23,16 +20,4 @@ export async function createVote(pollId, userId, optionIndex) {
   );
 
   return result.rows[0];
-}
-
-export async function updateVote(pollId, userId, optionIndex) {
-  const result = await pool.query(
-    `UPDATE votes
-     SET option_index = $3, updated_at = CURRENT_TIMESTAMP
-     WHERE poll_id = $1 AND user_id = $2
-     RETURNING id, poll_id, user_id, option_index, created_at, updated_at`,
-    [pollId, userId, optionIndex],
-  );
-
-  return result.rows[0] ?? null;
 }

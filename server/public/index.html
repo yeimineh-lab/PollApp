@@ -9,153 +9,186 @@
   </head>
 
   <body>
-    <header class="site-header">
-      <div class="brand">
-        <h1 id="brandTitle">Simple Poll</h1>
-      </div>
+    <div class="container">
+      <header class="site-header">
+        <div class="brand">
+          <h1 id="brandTitle">Simple Poll</h1>
+        </div>
 
-      <p id="pageHint" class="page-hint">
-        Log in or create an account to continue.
-      </p>
+        <p id="pageHint" class="page-hint">
+          Log in or create an account to continue.
+        </p>
 
-      <span class="badge">
-        <span class="dot"></span>
-        local:3000
-      </span>
+        <nav id="mainNav" class="main-nav hidden" aria-label="Main navigation">
+          <button class="nav-btn active" data-view="polls" type="button">Polls</button>
+          <button class="nav-btn" data-view="create" type="button">Create poll</button>
+          <button class="nav-btn" data-view="profile" type="button">Profile</button>
+          <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
+        </nav>
+      </header>
 
-      <nav id="mainNav" class="main-nav hidden" aria-label="Main navigation">
-        <button class="nav-btn active" data-view="polls" type="button">
-          Polls
-        </button>
+      <main>
+        <section id="authView" class="auth-view">
+          <div class="auth-shell">
+            <section class="card auth-card">
+              <div class="auth-tabs">
+                <button id="showLoginBtn" class="tab-btn active" type="button">Login</button>
+                <button id="showSignupBtn" class="tab-btn" type="button">Create account</button>
+              </div>
 
-        <button class="nav-btn" data-view="create" type="button">
-          Create poll
-        </button>
+              <div id="loginPanel" class="auth-panel">
+                <section class="panel">
+                  <h2>Login</h2>
 
-        <button class="nav-btn" data-view="profile" type="button">
-          Profile
-        </button>
+                  <p id="loginError" class="form-error hidden"></p>
 
-        <button id="logoutBtn" class="nav-btn danger" type="button">
-          Logout
-        </button>
-      </nav>
-    </header>
+                  <form id="loginForm" novalidate>
+                    <label for="loginUsername">Username</label>
+                    <input id="loginUsername" name="username" type="text" minlength="3" required />
 
-    <main>
-      <!-- AUTH VIEW -->
-      <section id="authView" class="auth-view">
-        <div class="auth-shell">
-          <section class="card auth-card">
-            <div class="auth-tabs">
-              <button id="showLoginBtn" class="tab-btn active" type="button">
-                Login
-              </button>
+                    <label for="loginPassword">Password</label>
+                    <input id="loginPassword" name="password" type="password" minlength="8" required />
 
-              <button id="showSignupBtn" class="tab-btn" type="button">
-                Create account
-              </button>
-            </div>
+                    <div class="row">
+                      <button type="submit">Login</button>
+                    </div>
+                  </form>
+                </section>
+              </div>
 
-            <div id="loginPanel" class="auth-panel">
-              <user-edit mode="login"></user-edit>
-            </div>
+              <div id="signupPanel" class="auth-panel hidden">
+                <section class="panel">
+                  <h2>Create user</h2>
 
-            <div id="signupPanel" class="auth-panel hidden">
-              <user-create></user-create>
+                  <p id="signupError" class="form-error hidden"></p>
+
+                  <form id="signupForm" novalidate>
+                    <label for="signupUsername">Username</label>
+                    <input id="signupUsername" name="username" type="text" minlength="3" required />
+
+                    <label for="signupPassword">Password</label>
+                    <input id="signupPassword" name="password" type="password" minlength="8" required />
+
+                    <label class="check-row">
+                      <input id="signupTos" name="tosAccepted" type="checkbox" required />
+                      <span>
+                        I accept
+                        <a href="/TERMS.MD">Terms</a>
+                        and
+                        <a href="/PRIVACY.MD">Privacy</a>
+                      </span>
+                    </label>
+
+                    <div class="row">
+                      <button type="submit">Sign up</button>
+                    </div>
+                  </form>
+                </section>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="appView" class="app-view hidden">
+          <section id="pollsView" class="view-section">
+            <div class="grid">
+              <section class="card col-12">
+                <h2>Available polls</h2>
+
+                <p class="subtitle">
+                  Anonymous voting. Users cannot see who voted, only totals and percentages.
+                </p>
+
+                <div id="pollsList"></div>
+              </section>
             </div>
           </section>
-        </div>
-      </section>
 
-      <!-- APP VIEW -->
-      <section id="appView" class="app-view hidden">
-        <!-- POLLS -->
-        <section id="pollsView" class="view-section">
-          <div class="grid">
-            <section class="card col-12">
-              <h2>Available polls</h2>
+          <section id="createPollView" class="view-section hidden">
+            <div class="grid">
+              <section class="card col-12">
+                <h2>Create a poll</h2>
 
-              <p class="subtitle">
-                Anonymous voting. Users cannot see who voted, only totals and
-                percentages.
-              </p>
+                <p class="subtitle">
+                  Create a poll that other logged-in users can vote on anonymously.
+                </p>
 
-              <div id="pollsList"></div>
-            </section>
-          </div>
+                <form id="createPollForm" class="panel">
+                  <div class="field">
+                    <label for="pollTitle">Title</label>
+                    <input
+                      id="pollTitle"
+                      name="title"
+                      type="text"
+                      placeholder="What should we vote on?"
+                      required
+                    />
+                  </div>
+
+                  <div class="options-grid">
+                    <div class="field">
+                      <label for="option1">Option 1</label>
+                      <input id="option1" name="option1" type="text" required />
+                    </div>
+
+                    <div class="field">
+                      <label for="option2">Option 2</label>
+                      <input id="option2" name="option2" type="text" required />
+                    </div>
+
+                    <div class="field">
+                      <label for="option3">Option 3</label>
+                      <input id="option3" name="option3" type="text" />
+                    </div>
+
+                    <div class="field">
+                      <label for="option4">Option 4</label>
+                      <input id="option4" name="option4" type="text" />
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <button type="submit">Create poll</button>
+                  </div>
+
+                  <p id="createPollMessage" class="subtitle"></p>
+                </form>
+              </section>
+            </div>
+          </section>
+
+          <section id="profileView" class="view-section hidden">
+            <div class="grid">
+              <section class="card col-12">
+                <h2>Profile</h2>
+
+                <p class="subtitle">Update your username or password here.</p>
+
+                <section class="panel">
+                  <p class="profile-name">
+                    Logged in as: <strong id="profileCurrentUsername">-</strong>
+                  </p>
+
+                  <p id="profileError" class="form-error hidden"></p>
+
+                  <form id="profileForm" novalidate>
+                    <label for="profileUsername">New username (optional)</label>
+                    <input id="profileUsername" name="newUsername" type="text" minlength="3" />
+
+                    <label for="profilePassword">New password (optional)</label>
+                    <input id="profilePassword" name="newPassword" type="password" minlength="8" />
+
+                    <div class="row">
+                      <button type="submit">Save changes</button>
+                      <button id="deleteAccountBtn" class="danger" type="button">Delete my account</button>
+                    </div>
+                  </form>
+                </section>
+              </section>
+            </div>
+          </section>
         </section>
-
-        <!-- CREATE POLL -->
-        <section id="createPollView" class="view-section hidden">
-          <div class="grid">
-            <section class="card col-12">
-              <h2>Create a poll</h2>
-
-              <p class="subtitle">
-                Create a poll that other logged-in users can vote on anonymously.
-              </p>
-
-              <form id="createPollForm" class="panel">
-                <div class="field">
-                  <label for="pollTitle">Title</label>
-
-                  <input
-                    id="pollTitle"
-                    name="title"
-                    type="text"
-                    placeholder="What should we vote on?"
-                    required
-                  />
-                </div>
-
-                <div class="options-grid">
-                  <div class="field">
-                    <label for="option1">Option 1</label>
-                    <input id="option1" name="option1" type="text" required />
-                  </div>
-
-                  <div class="field">
-                    <label for="option2">Option 2</label>
-                    <input id="option2" name="option2" type="text" required />
-                  </div>
-
-                  <div class="field">
-                    <label for="option3">Option 3</label>
-                    <input id="option3" name="option3" type="text" />
-                  </div>
-
-                  <div class="field">
-                    <label for="option4">Option 4</label>
-                    <input id="option4" name="option4" type="text" />
-                  </div>
-                </div>
-
-                <div class="row">
-                  <button type="submit">Create poll</button>
-                </div>
-
-                <p id="createPollMessage" class="subtitle"></p>
-              </form>
-            </section>
-          </div>
-        </section>
-
-        <!-- PROFILE -->
-        <section id="profileView" class="view-section hidden">
-          <div class="grid">
-            <section class="card col-12">
-              <h2>Profile</h2>
-
-              <p class="subtitle">
-                Update your username or password here.
-              </p>
-
-              <user-edit mode="profile"></user-edit>
-            </section>
-          </div>
-        </section>
-      </section>
-    </main>
+      </main>
+    </div>
   </body>
 </html>

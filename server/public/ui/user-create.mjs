@@ -6,7 +6,6 @@ class UserCreate extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
     this.#onChange = () => this.render();
   }
 
@@ -22,31 +21,16 @@ class UserCreate extends HTMLElement {
   render() {
     const { status } = userStore.state;
 
-    this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="../app.css">
-
+    this.innerHTML = `
       <section class="panel">
         <h2>${t("createUser")}</h2>
 
         <form id="f" novalidate>
-
           <label for="username">${t("username")}</label>
-          <input 
-            id="username" 
-            name="username" 
-            type="text" 
-            minlength="3" 
-            required
-          />
+          <input id="username" name="username" type="text" minlength="3" required />
 
           <label for="password">${t("password")}</label>
-          <input 
-            id="password" 
-            name="password" 
-            type="password" 
-            minlength="8" 
-            required
-          />
+          <input id="password" name="password" type="password" minlength="8" required />
 
           <label class="check-row">
             <input name="tosAccepted" type="checkbox" required />
@@ -59,23 +43,18 @@ class UserCreate extends HTMLElement {
           </label>
 
           <div class="row">
-            <button 
-              class="primary" 
-              type="submit" 
-              ${status === "loading" ? "disabled" : ""}
-            >
+            <button class="primary" type="submit" ${status === "loading" ? "disabled" : ""}>
               ${t("signUp")}
             </button>
           </div>
-
         </form>
       </section>
     `;
 
-    const form = this.shadowRoot.querySelector("#f");
-    const usernameInput = this.shadowRoot.querySelector("#username");
-    const passwordInput = this.shadowRoot.querySelector("#password");
-    const tosInput = this.shadowRoot.querySelector('input[name="tosAccepted"]');
+    const form = this.querySelector("#f");
+    const usernameInput = this.querySelector("#username");
+    const passwordInput = this.querySelector("#password");
+    const tosInput = this.querySelector('input[name="tosAccepted"]');
 
     form.onsubmit = async (e) => {
       e.preventDefault();
@@ -107,7 +86,7 @@ class UserCreate extends HTMLElement {
       await userStore.signup({
         username: String(fd.get("username") || ""),
         password: String(fd.get("password") || ""),
-        tosAccepted: Boolean(fd.get("tosAccepted"))
+        tosAccepted: Boolean(fd.get("tosAccepted")),
       });
 
       form.reset();

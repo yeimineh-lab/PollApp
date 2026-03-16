@@ -1,16 +1,13 @@
-// votes.service.mjs
-// Contains business logic for creating or updating votes.
-
-import { ValidationError, NotFoundError } from "../middleware/errors.mjs";
-import { getVoteByPollAndUser, createVote, updateVote } from "../storage/votes.pgStore.mjs";
+import { ValidationError, NotFoundError, ConflictError } from "../middleware/errors.mjs";
+import { getVoteByPollAndUser, createVote } from "../storage/votes.pgStore.mjs";
 import { getPollById } from "../storage/polls.pgStore.mjs";
 
 export async function voteOnPoll({ pollId, userId, optionIndex }) {
-  if (typeof pollId !== "string" || pollId.length === 0) {
+  if (!Number.isInteger(pollId) || pollId <= 0) {
     throw new ValidationError("Invalid poll id");
   }
 
-  if (typeof userId !== "string" || userId.length === 0) {
+  if (typeof userId !== "string" || userId.trim().length === 0) {
     throw new ValidationError("Invalid user id");
   }
 
@@ -19,14 +16,19 @@ export async function voteOnPoll({ pollId, userId, optionIndex }) {
   }
 
   const poll = await getPollById(pollId);
+
   if (!poll) {
     throw new NotFoundError("Poll not found");
+  }
+
+  if (String(poll.owner_id) === String(userId)) {
+    throw new ConflictError("You cannot vote on your own poll");
   }
 
   const existingVote = await getVoteByPollAndUser(pollId, userId);
 
   if (existingVote) {
-    return updateVote(pollId, userId, optionIndex);
+    throw new ConflictError("You have already voted on this poll");
   }
 
   return createVote(pollId, userId, optionIndex);

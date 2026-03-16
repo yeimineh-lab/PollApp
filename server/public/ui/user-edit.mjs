@@ -6,7 +6,6 @@ class UserEdit extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
     this.#onChange = () => this.render();
   }
 
@@ -38,8 +37,7 @@ class UserEdit extends HTMLElement {
   }
 
   renderLoginOnly(status, loggedIn, error) {
-    this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="../app.css">
+    this.innerHTML = `
       <section class="panel">
         <h2>${t("login")}</h2>
 
@@ -53,26 +51,30 @@ class UserEdit extends HTMLElement {
           <input id="login-password" name="password" type="password" minlength="8" required />
 
           <div class="row">
-            <button class="primary" type="submit" ${status === "loading" ? "disabled" : ""}>${t("login")}</button>
-            <button type="button" id="logoutBtn" ${!loggedIn || status === "loading" ? "disabled" : ""}>${t("logout")}</button>
+            <button class="primary" type="submit" ${status === "loading" ? "disabled" : ""}>
+              ${t("login")}
+            </button>
+            <button type="button" id="logoutBtn" ${!loggedIn || status === "loading" ? "disabled" : ""}>
+              ${t("logout")}
+            </button>
           </div>
         </form>
       </section>
     `;
 
     this.bindLoginForm();
-    this.shadowRoot.querySelector("#logoutBtn").onclick = () => userStore.logout();
+    const logoutBtn = this.querySelector("#logoutBtn");
+    if (logoutBtn) logoutBtn.onclick = () => userStore.logout();
   }
 
   renderProfileOnly(status, loggedIn, me, error) {
-    this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="../app.css">
+    this.innerHTML = `
       <section class="panel">
         <h2>Profile settings</h2>
 
         ${error ? `<p class="form-error">${error}</p>` : ""}
 
-        <div class="muted profile-name">${t("loggedInAs")}: <strong>${me?.username ?? "-"}</strong></div>
+        <div class="profile-name">${t("loggedInAs")}: <strong>${me?.username ?? "-"}</strong></div>
 
         <form id="edit" novalidate>
           <label for="new-username">${t("newUsernameOptional")}</label>
@@ -82,8 +84,12 @@ class UserEdit extends HTMLElement {
           <input id="new-password" name="newPassword" type="password" minlength="8" />
 
           <div class="row">
-            <button class="primary" type="submit" ${!loggedIn || status === "loading" ? "disabled" : ""}>${t("saveChanges")}</button>
-            <button class="danger" type="button" id="deleteBtn" ${!loggedIn || status === "loading" ? "disabled" : ""}>${t("deleteMyAccount")}</button>
+            <button class="primary" type="submit" ${!loggedIn || status === "loading" ? "disabled" : ""}>
+              ${t("saveChanges")}
+            </button>
+            <button class="danger" type="button" id="deleteBtn" ${!loggedIn || status === "loading" ? "disabled" : ""}>
+              ${t("deleteMyAccount")}
+            </button>
           </div>
         </form>
       </section>
@@ -91,15 +97,17 @@ class UserEdit extends HTMLElement {
 
     this.bindEditForm();
 
-    this.shadowRoot.querySelector("#deleteBtn").onclick = async () => {
-      if (!confirm(t("confirmDelete"))) return;
-      await userStore.deleteMe();
-    };
+    const deleteBtn = this.querySelector("#deleteBtn");
+    if (deleteBtn) {
+      deleteBtn.onclick = async () => {
+        if (!confirm(t("confirmDelete"))) return;
+        await userStore.deleteMe();
+      };
+    }
   }
 
   renderFull(status, loggedIn, me, error) {
-    this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="../app.css">
+    this.innerHTML = `
       <section class="panel">
         <h2>${t("loginEdit")}</h2>
 
@@ -113,14 +121,18 @@ class UserEdit extends HTMLElement {
           <input id="login-password" name="password" type="password" minlength="8" required />
 
           <div class="row">
-            <button class="primary" type="submit" ${status === "loading" ? "disabled" : ""}>${t("login")}</button>
-            <button type="button" id="logoutBtn" ${!loggedIn || status === "loading" ? "disabled" : ""}>${t("logout")}</button>
+            <button class="primary" type="submit" ${status === "loading" ? "disabled" : ""}>
+              ${t("login")}
+            </button>
+            <button type="button" id="logoutBtn" ${!loggedIn || status === "loading" ? "disabled" : ""}>
+              ${t("logout")}
+            </button>
           </div>
         </form>
 
         <hr />
 
-        <div class="muted profile-name">${t("loggedInAs")}: <strong>${me?.username ?? "-"}</strong></div>
+        <div class="profile-name">${t("loggedInAs")}: <strong>${me?.username ?? "-"}</strong></div>
 
         <form id="edit" novalidate>
           <label for="new-username">${t("newUsernameOptional")}</label>
@@ -130,8 +142,12 @@ class UserEdit extends HTMLElement {
           <input id="new-password" name="newPassword" type="password" minlength="8" />
 
           <div class="row">
-            <button class="primary" type="submit" ${!loggedIn || status === "loading" ? "disabled" : ""}>${t("saveChanges")}</button>
-            <button class="danger" type="button" id="deleteBtn" ${!loggedIn || status === "loading" ? "disabled" : ""}>${t("deleteMyAccount")}</button>
+            <button class="primary" type="submit" ${!loggedIn || status === "loading" ? "disabled" : ""}>
+              ${t("saveChanges")}
+            </button>
+            <button class="danger" type="button" id="deleteBtn" ${!loggedIn || status === "loading" ? "disabled" : ""}>
+              ${t("deleteMyAccount")}
+            </button>
           </div>
         </form>
       </section>
@@ -140,21 +156,24 @@ class UserEdit extends HTMLElement {
     this.bindLoginForm();
     this.bindEditForm();
 
-    const logoutBtn = this.shadowRoot.querySelector("#logoutBtn");
+    const logoutBtn = this.querySelector("#logoutBtn");
     if (logoutBtn) logoutBtn.onclick = () => userStore.logout();
 
-    this.shadowRoot.querySelector("#deleteBtn").onclick = async () => {
-      if (!confirm(t("confirmDelete"))) return;
-      await userStore.deleteMe();
-    };
+    const deleteBtn = this.querySelector("#deleteBtn");
+    if (deleteBtn) {
+      deleteBtn.onclick = async () => {
+        if (!confirm(t("confirmDelete"))) return;
+        await userStore.deleteMe();
+      };
+    }
   }
 
   bindLoginForm() {
-    const loginForm = this.shadowRoot.querySelector("#login");
+    const loginForm = this.querySelector("#login");
     if (!loginForm) return;
 
-    const loginUsername = this.shadowRoot.querySelector("#login-username");
-    const loginPassword = this.shadowRoot.querySelector("#login-password");
+    const loginUsername = this.querySelector("#login-username");
+    const loginPassword = this.querySelector("#login-password");
 
     loginForm.onsubmit = async (e) => {
       e.preventDefault();
@@ -183,9 +202,7 @@ class UserEdit extends HTMLElement {
           username: String(fd.get("username") || ""),
           password: String(fd.get("password") || ""),
         });
-      } catch {
-        // Error is already stored in userStore.state.error and rendered in UI
-      }
+      } catch {}
     };
 
     loginUsername.oninput = () => loginUsername.setCustomValidity("");
@@ -193,11 +210,11 @@ class UserEdit extends HTMLElement {
   }
 
   bindEditForm() {
-    const editForm = this.shadowRoot.querySelector("#edit");
+    const editForm = this.querySelector("#edit");
     if (!editForm) return;
 
-    const newUsername = this.shadowRoot.querySelector("#new-username");
-    const newPassword = this.shadowRoot.querySelector("#new-password");
+    const newUsername = this.querySelector("#new-username");
+    const newPassword = this.querySelector("#new-password");
 
     editForm.onsubmit = async (e) => {
       e.preventDefault();
@@ -228,9 +245,7 @@ class UserEdit extends HTMLElement {
       try {
         await userStore.updateMe(patch);
         editForm.reset();
-      } catch {
-        // Error is already stored in userStore.state.error and rendered in UI
-      }
+      } catch {}
     };
 
     newUsername.oninput = () => newUsername.setCustomValidity("");

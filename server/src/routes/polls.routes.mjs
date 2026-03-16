@@ -17,7 +17,10 @@ router.get("/polls", requireAuth(), async (req, res, next) => {
 // GET /api/v1/polls/:id/results
 router.get("/polls/:id/results", requireAuth(), async (req, res, next) => {
   try {
-    const result = await pollsService.getPollResults(req.params.id);
+    const result = await pollsService.getPollResults({
+      pollId: req.params.id,
+      userId: req.auth.userId,
+    });
     res.json(result);
   } catch (error) {
     next(error);

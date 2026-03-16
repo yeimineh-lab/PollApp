@@ -5,6 +5,7 @@ import {
   getPollById,
   deletePollById,
 } from "../storage/polls.pgStore.mjs";
+import { getVoteByPollAndUser } from "../storage/votes.pgStore.mjs";
 import { ValidationError, NotFoundError } from "../middleware/errors.mjs";
 import { pool } from "../storage/db.mjs";
 
@@ -53,7 +54,7 @@ export async function createPoll({ body, userId }) {
   return { poll };
 }
 
-export async function getPollResults(pollId) {
+export async function getPollResults({ pollId, userId }) {
   const poll = await getPollById(pollId);
 
   if (!poll) {
@@ -79,12 +80,17 @@ export async function getPollResults(pollId) {
     voteResult.rows.map((row) => [Number(row.option_index), Number(row.votes)]),
   );
 
+  const existingVote = userId
+    ? await getVoteByPollAndUser(pollId, userId)
+    : null;
+
   return {
     poll: {
       id: poll.id,
       title: poll.title,
       createdBy: poll.owner_id,
       ownerUsername: poll.owner_username,
+      userVote: existingVote ? Number(existingVote.option_index) : null,
       options: options.map((text, index) => ({
         optionIndex: index,
         text,
