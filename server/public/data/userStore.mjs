@@ -63,7 +63,7 @@ class UserStore extends EventTarget {
       });
 
       return me;
-    } catch (error) {
+    } catch {
       this.#resetAuthState();
       this.#set({
         lastAction: { name: "bootstrap", ok: false },
@@ -79,10 +79,16 @@ class UserStore extends EventTarget {
       lastAction: { name: "signup", endpoint: "POST /api/v1/users" },
     });
 
+    const body = {
+      username: payload.username,
+      password: payload.password,
+      tosAccepted: Boolean(payload.tosAccepted ?? payload.consent ?? payload.consentAccepted),
+    };
+
     try {
       const created = await request("/api/v1/users", {
         method: "POST",
-        body: payload,
+        body,
       });
 
       this.#set({
@@ -194,8 +200,8 @@ class UserStore extends EventTarget {
           token,
         });
       }
-    } catch (_) {
-      // Selv om backend logout feiler, logger vi fortsatt ut lokalt.
+    } catch {
+      // Even if backend logout fails, still log out locally.
     }
 
     this.#resetAuthState();

@@ -1,5 +1,9 @@
 const CACHE_NAME = "poll-app-static-v2";
 
+/*
+Files that should be available offline.
+This is called the "app shell".
+*/
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
@@ -11,8 +15,9 @@ const ASSETS_TO_CACHE = [
   "/icons/icon-512.png",
 ];
 
-// Bare cache app-shell/statisk innhold.
-// IKKE cache API-kall.
+/*
+Check if request is a static file (not API)
+*/
 function isStaticAsset(requestUrl) {
   const url = new URL(requestUrl);
 
@@ -22,14 +27,22 @@ function isStaticAsset(requestUrl) {
   return ASSETS_TO_CACHE.includes(url.pathname);
 }
 
+/*
+INSTALL:
+Cache important static files
+*/
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE)),
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
 
   self.skipWaiting();
 });
 
+/*
+ACTIVATE:
+Delete old caches and take control
+*/
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
@@ -38,28 +51,39 @@ self.addEventListener("activate", (event) => {
       await Promise.all(
         keys
           .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key)),
+          .map((key) => caches.delete(key))
       );
 
       await self.clients.claim();
-    })(),
+    })()
   );
 });
 
+/*
+FETCH:
+Handle requests
+*/
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
-  // Bare håndter GET
+  // Only handle GET requests
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
 
-  // ALDRI cache eller avskjær API-kall
+  /*
+  Never cache API calls
+  Always go to network
+  */
   if (url.pathname.startsWith("/api/")) {
     return;
   }
 
-  // Navigasjon: prøv nett først, fallback til offline-side
+  /*
+  Page navigation:
+  Try network first
+  If offline → show offline page
+  */
   if (request.mode === "navigate") {
     event.respondWith(
       (async () => {
@@ -70,17 +94,19 @@ self.addEventListener("fetch", (event) => {
           return (
             offline ||
             new Response("Offline", {
-              status: 503,
-              headers: { "Content-Type": "text/plain" },
+              status: 503
             })
           );
         }
-      })(),
+      })()
     );
     return;
   }
 
-  // Kun kjente statiske filer: cache first
+  /*
+  Static files:
+  Cache first strategy
+  */
   if (isStaticAsset(request.url)) {
     event.respondWith(
       (async () => {
@@ -90,8 +116,9 @@ self.addEventListener("fetch", (event) => {
         const response = await fetch(request);
         const cache = await caches.open(CACHE_NAME);
         cache.put(request, response.clone());
+
         return response;
-      })(),
+      })()
     );
   }
 });

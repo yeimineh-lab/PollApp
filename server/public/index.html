@@ -2,9 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
     <title>Simple Poll</title>
+
     <link rel="stylesheet" href="/app.css" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.ico"
+    <meta name="theme-color" content="#ffffff" />
+
     <script type="module" src="/app.mjs" defer></script>
   </head>
 
@@ -19,11 +27,39 @@
           Log in or create an account to continue.
         </p>
 
-        <nav id="mainNav" class="main-nav hidden" aria-label="Main navigation">
-          <button class="nav-btn active" data-view="polls" type="button">Polls</button>
-          <button class="nav-btn" data-view="create" type="button">Create poll</button>
-          <button class="nav-btn" data-view="profile" type="button">Profile</button>
-          <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
+        <nav
+          id="mainNav"
+          class="main-nav hidden"
+          aria-label="Main navigation"
+        >
+          <button
+            class="nav-btn active"
+            data-view="polls"
+            type="button"
+          >
+            Polls
+          </button>
+          <button
+            class="nav-btn"
+            data-view="create"
+            type="button"
+          >
+            Create poll
+          </button>
+          <button
+            class="nav-btn"
+            data-view="profile"
+            type="button"
+          >
+            Profile
+          </button>
+          <button
+            id="logoutBtn"
+            class="nav-btn"
+            type="button"
+          >
+            Logout
+          </button>
         </nav>
       </header>
 
@@ -31,23 +67,68 @@
         <section id="authView" class="auth-view">
           <div class="auth-shell">
             <section class="card auth-card">
-              <div class="auth-tabs">
-                <button id="showLoginBtn" class="tab-btn active" type="button">Login</button>
-                <button id="showSignupBtn" class="tab-btn" type="button">Create account</button>
+              <div
+                class="auth-tabs"
+                role="tablist"
+                aria-label="Authentication"
+              >
+                <button
+                  id="showLoginBtn"
+                  class="tab-btn active"
+                  type="button"
+                  role="tab"
+                  aria-selected="true"
+                  aria-controls="loginPanel"
+                >
+                  Login
+                </button>
+                <button
+                  id="showSignupBtn"
+                  class="tab-btn"
+                  type="button"
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="signupPanel"
+                >
+                  Create account
+                </button>
               </div>
 
-              <div id="loginPanel" class="auth-panel">
+              <div
+                id="loginPanel"
+                class="auth-panel"
+                role="tabpanel"
+                aria-labelledby="showLoginBtn"
+              >
                 <section class="panel">
                   <h2>Login</h2>
 
-                  <p id="loginError" class="form-error hidden"></p>
+                  <p
+                    id="loginError"
+                    class="form-error hidden"
+                    aria-live="polite"
+                  ></p>
 
                   <form id="loginForm" novalidate>
                     <label for="loginUsername">Username</label>
-                    <input id="loginUsername" name="username" type="text" minlength="3" required />
+                    <input
+                      id="loginUsername"
+                      name="username"
+                      type="text"
+                      minlength="3"
+                      autocomplete="username"
+                      required
+                    />
 
                     <label for="loginPassword">Password</label>
-                    <input id="loginPassword" name="password" type="password" minlength="8" required />
+                    <input
+                      id="loginPassword"
+                      name="password"
+                      type="password"
+                      minlength="8"
+                      autocomplete="current-password"
+                      required
+                    />
 
                     <div class="row">
                       <button type="submit">Login</button>
@@ -56,33 +137,22 @@
                 </section>
               </div>
 
-              <div id="signupPanel" class="auth-panel hidden">
+              <div
+                id="signupPanel"
+                class="auth-panel hidden"
+                role="tabpanel"
+                aria-labelledby="showSignupBtn"
+              >
                 <section class="panel">
-                  <h2>Create user</h2>
+                  <h2>Create account</h2>
 
-                  <p id="signupError" class="form-error hidden"></p>
+                  <p
+                    id="signupError"
+                    class="form-error hidden"
+                    aria-live="polite"
+                  ></p>
 
-                  <form id="signupForm" novalidate>
-                    <label for="signupUsername">Username</label>
-                    <input id="signupUsername" name="username" type="text" minlength="3" required />
-
-                    <label for="signupPassword">Password</label>
-                    <input id="signupPassword" name="password" type="password" minlength="8" required />
-
-                    <label class="check-row">
-                      <input id="signupTos" name="tosAccepted" type="checkbox" required />
-                      <span>
-                        I accept
-                        <a href="/TERMS.MD">Terms</a>
-                        and
-                        <a href="/PRIVACY.MD">Privacy</a>
-                      </span>
-                    </label>
-
-                    <div class="row">
-                      <button type="submit">Sign up</button>
-                    </div>
-                  </form>
+                  <user-create></user-create>
                 </section>
               </div>
             </section>
@@ -96,10 +166,11 @@
                 <h2>Available polls</h2>
 
                 <p class="subtitle">
-                  Anonymous voting. Users cannot see who voted, only totals and percentages.
+                  Anonymous voting. Users cannot see who voted, only totals and
+                  percentages.
                 </p>
 
-                <div id="pollsList"></div>
+                <div id="pollsList" aria-live="polite"></div>
               </section>
             </div>
           </section>
@@ -110,7 +181,8 @@
                 <h2>Create a poll</h2>
 
                 <p class="subtitle">
-                  Create a poll that other logged-in users can vote on anonymously.
+                  Create a poll that other logged-in users can vote on
+                  anonymously.
                 </p>
 
                 <form id="createPollForm" class="panel">
@@ -128,22 +200,40 @@
                   <div class="options-grid">
                     <div class="field">
                       <label for="option1">Option 1</label>
-                      <input id="option1" name="option1" type="text" required />
+                      <input
+                        id="option1"
+                        name="option1"
+                        type="text"
+                        required
+                      />
                     </div>
 
                     <div class="field">
                       <label for="option2">Option 2</label>
-                      <input id="option2" name="option2" type="text" required />
+                      <input
+                        id="option2"
+                        name="option2"
+                        type="text"
+                        required
+                      />
                     </div>
 
                     <div class="field">
                       <label for="option3">Option 3</label>
-                      <input id="option3" name="option3" type="text" />
+                      <input
+                        id="option3"
+                        name="option3"
+                        type="text"
+                      />
                     </div>
 
                     <div class="field">
                       <label for="option4">Option 4</label>
-                      <input id="option4" name="option4" type="text" />
+                      <input
+                        id="option4"
+                        name="option4"
+                        type="text"
+                      />
                     </div>
                   </div>
 
@@ -151,7 +241,11 @@
                     <button type="submit">Create poll</button>
                   </div>
 
-                  <p id="createPollMessage" class="subtitle"></p>
+                  <p
+                    id="createPollMessage"
+                    class="subtitle"
+                    aria-live="polite"
+                  ></p>
                 </form>
               </section>
             </div>
@@ -162,27 +256,24 @@
               <section class="card col-12">
                 <h2>Profile</h2>
 
-                <p class="subtitle">Update your username or password here.</p>
+                <p class="subtitle">
+                  Update your username or password here.
+                </p>
 
                 <section class="panel">
                   <p class="profile-name">
-                    Logged in as: <strong id="profileCurrentUsername">-</strong>
+                    Logged in as:
+                    <strong id="profileCurrentUsername">-</strong>
                   </p>
 
-                  <p id="profileError" class="form-error hidden"></p>
+                  <p
+                    id="profileError"
+                    class="form-error hidden"
+                    aria-live="polite"
+                  ></p>
 
-                  <form id="profileForm" novalidate>
-                    <label for="profileUsername">New username (optional)</label>
-                    <input id="profileUsername" name="newUsername" type="text" minlength="3" />
-
-                    <label for="profilePassword">New password (optional)</label>
-                    <input id="profilePassword" name="newPassword" type="password" minlength="8" />
-
-                    <div class="row">
-                      <button type="submit">Save changes</button>
-                      <button id="deleteAccountBtn" class="danger" type="button">Delete my account</button>
-                    </div>
-                  </form>
+                  <user-edit></user-edit>
+                  <user-delete></user-delete>
                 </section>
               </section>
             </div>

@@ -2,48 +2,64 @@
 import { request } from "./data/api.mjs";
 import { t, detectLanguage } from "./i18n/index.mjs";
 
-const authView = document.querySelector("#authView");
-const appView = document.querySelector("#appView");
-const pageHintEl = document.querySelector("#pageHint");
-const mainNav = document.querySelector("#mainNav");
-const brandTitleEl = document.querySelector("#brandTitle");
+import "./ui/user-create.mjs";
+import "./ui/user-edit.mjs";
+import "./ui/user-delete.mjs";
 
-const showLoginBtn = document.querySelector("#showLoginBtn");
-const showSignupBtn = document.querySelector("#showSignupBtn");
-const loginPanel = document.querySelector("#loginPanel");
-const signupPanel = document.querySelector("#signupPanel");
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
-const pollsView = document.querySelector("#pollsView");
-const createPollView = document.querySelector("#createPollView");
-const profileView = document.querySelector("#profileView");
+const authView = $("#authView");
+const appView = $("#appView");
+const pageHintEl = $("#pageHint");
+const mainNav = $("#mainNav");
+const brandTitleEl = $("#brandTitle");
 
-const pollsListEl = document.querySelector("#pollsList");
-const createPollForm = document.querySelector("#createPollForm");
-const createPollMessageEl = document.querySelector("#createPollMessage");
-const logoutBtn = document.querySelector("#logoutBtn");
+const showLoginBtn = $("#showLoginBtn");
+const showSignupBtn = $("#showSignupBtn");
+const loginPanel = $("#loginPanel");
+const signupPanel = $("#signupPanel");
 
-const loginForm = document.querySelector("#loginForm");
-const signupForm = document.querySelector("#signupForm");
-const loginErrorEl = document.querySelector("#loginError");
-const signupErrorEl = document.querySelector("#signupError");
+const pollsView = $("#pollsView");
+const createPollView = $("#createPollView");
+const profileView = $("#profileView");
 
-const profileForm = document.querySelector("#profileForm");
-const profileErrorEl = document.querySelector("#profileError");
-const profileCurrentUsernameEl = document.querySelector("#profileCurrentUsername");
-const deleteAccountBtn = document.querySelector("#deleteAccountBtn");
+const pollsListEl = $("#pollsList");
+const createPollForm = $("#createPollForm");
+const createPollMessageEl = $("#createPollMessage");
+const logoutBtn = $("#logoutBtn");
+
+const loginForm = $("#loginForm");
+const loginErrorEl = $("#loginError");
+const signupErrorEl = $("#signupError");
+
+const profileErrorEl = $("#profileError");
+const profileCurrentUsernameEl = $("#profileCurrentUsername");
 
 const currentLang = detectLanguage();
 let currentAppView = "polls";
 let pollsLoading = false;
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#39;",
-  }[c]));
+  }[char]));
+}
+
+function showMessage(element, message = "") {
+  if (!element) return;
+
+  element.textContent = message;
+
+  if (message) {
+    element.classList.remove("hidden");
+  } else {
+    element.classList.add("hidden");
+  }
 }
 
 function applyTranslations() {
@@ -56,15 +72,10 @@ function applyTranslations() {
 }
 
 function renderCurrentUserInHeader() {
-  const { token, me } = userStore.state;
-
   if (!brandTitleEl) return;
 
-  if (token && me?.username) {
-    brandTitleEl.textContent = me.username;
-  } else {
-    brandTitleEl.textContent = "Simple Poll";
-  }
+  const { token, me } = userStore.state;
+  brandTitleEl.textContent = token && me?.username ? me.username : "Simple Poll";
 }
 
 function renderProfileInfo() {
@@ -74,26 +85,19 @@ function renderProfileInfo() {
     profileCurrentUsernameEl.textContent = me?.username ?? "-";
   }
 
-  if (profileErrorEl) {
-    if (error) {
-      profileErrorEl.textContent = error;
-      profileErrorEl.classList.remove("hidden");
-    } else {
-      profileErrorEl.textContent = "";
-      profileErrorEl.classList.add("hidden");
-    }
-  }
+  showMessage(profileErrorEl, error ?? "");
 }
 
 function activateAuthTab(tab) {
-  if (!showLoginBtn || !showSignupBtn || !loginPanel || !signupPanel) return;
+  const isLogin = tab === "login";
 
-  const loginActive = tab === "login";
+  showLoginBtn?.classList.toggle("active", isLogin);
+  showSignupBtn?.classList.toggle("active", !isLogin);
+  loginPanel?.classList.toggle("hidden", !isLogin);
+  signupPanel?.classList.toggle("hidden", isLogin);
 
-  showLoginBtn.classList.toggle("active", loginActive);
-  showSignupBtn.classList.toggle("active", !loginActive);
-  loginPanel.classList.toggle("hidden", !loginActive);
-  signupPanel.classList.toggle("hidden", loginActive);
+  showLoginBtn?.setAttribute("aria-selected", String(isLogin));
+  showSignupBtn?.setAttribute("aria-selected", String(!isLogin));
 }
 
 function bindAuthTabs() {
@@ -108,8 +112,8 @@ function showAppView(viewName) {
   createPollView?.classList.toggle("hidden", viewName !== "create");
   profileView?.classList.toggle("hidden", viewName !== "profile");
 
-  document.querySelectorAll(".nav-btn[data-view]").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.view === viewName);
+  $$(".nav-btn[data-view]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.view === viewName);
   });
 
   if (viewName === "profile") {
@@ -118,9 +122,9 @@ function showAppView(viewName) {
 }
 
 function bindNav() {
-  document.querySelectorAll(".nav-btn[data-view]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      showAppView(btn.dataset.view);
+  $$(".nav-btn[data-view]").forEach((button) => {
+    button.addEventListener("click", () => {
+      showAppView(button.dataset.view);
     });
   });
 
@@ -136,11 +140,9 @@ function bindNav() {
 function updateView() {
   const { token } = userStore.state;
 
-  if (!authView || !appView) return;
-
   if (token) {
-    authView.classList.add("hidden");
-    appView.classList.remove("hidden");
+    authView?.classList.add("hidden");
+    appView?.classList.remove("hidden");
     mainNav?.classList.remove("hidden");
 
     if (pageHintEl) {
@@ -149,17 +151,18 @@ function updateView() {
 
     showAppView(currentAppView);
     renderProfileInfo();
-  } else {
-    authView.classList.remove("hidden");
-    appView.classList.add("hidden");
-    mainNav?.classList.add("hidden");
-
-    if (pageHintEl) {
-      pageHintEl.textContent = "Log in or create an account to continue.";
-    }
-
-    activateAuthTab("login");
+    return;
   }
+
+  authView?.classList.remove("hidden");
+  appView?.classList.add("hidden");
+  mainNav?.classList.add("hidden");
+
+  if (pageHintEl) {
+    pageHintEl.textContent = "Log in or create an account to continue.";
+  }
+
+  activateAuthTab("login");
 }
 
 function renderPollCard(poll) {
@@ -169,7 +172,13 @@ function renderPollCard(poll) {
     ? poll.options.reduce((sum, option) => sum + Number(option.votes || 0), 0)
     : 0;
 
-  const ownerId = poll.createdBy ?? poll.created_by ?? poll.userId ?? poll.user_id ?? null;
+  const ownerId =
+    poll.createdBy ??
+    poll.created_by ??
+    poll.userId ??
+    poll.user_id ??
+    null;
+
   const myId = me?.id ?? me?.userId ?? null;
 
   const isOwner = Boolean(ownerId && myId && String(ownerId) === String(myId));
@@ -180,7 +189,6 @@ function renderPollCard(poll) {
     .map((option) => {
       const votes = Number(option.votes || 0);
       const percent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
-
       const hasVoted = userVote !== null && userVote !== undefined;
       const isUsersOption = Number(userVote) === Number(option.optionIndex);
 
@@ -231,14 +239,14 @@ function renderPollCard(poll) {
         ${
           canDelete
             ? `
-          <button
-            type="button"
-            class="delete-poll-btn"
-            data-poll-id="${escapeHtml(poll.id)}"
-          >
-            Delete poll
-          </button>
-        `
+              <button
+                type="button"
+                class="delete-poll-btn"
+                data-poll-id="${escapeHtml(poll.id)}"
+              >
+                Delete poll
+              </button>
+            `
             : ""
         }
       </div>
@@ -251,13 +259,13 @@ function renderPollCard(poll) {
 }
 
 function bindVoteButtons() {
-  document.querySelectorAll(".vote-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      if (btn.disabled) return;
+  $$(".vote-btn").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (button.disabled) return;
 
       const { token } = userStore.state;
-      const pollId = btn.dataset.pollId;
-      const optionIndex = Number(btn.dataset.optionIndex);
+      const pollId = button.dataset.pollId;
+      const optionIndex = Number(button.dataset.optionIndex);
 
       try {
         await request(`/api/v1/polls/${pollId}/vote`, {
@@ -275,13 +283,13 @@ function bindVoteButtons() {
 }
 
 function bindDeletePollButtons() {
-  document.querySelectorAll(".delete-poll-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
+  $$(".delete-poll-btn").forEach((button) => {
+    button.addEventListener("click", async () => {
       const { token } = userStore.state;
-      const pollId = btn.dataset.pollId;
+      const pollId = button.dataset.pollId;
 
-      const ok = confirm("Delete this poll? This cannot be undone.");
-      if (!ok) return;
+      const confirmed = confirm("Delete this poll? This cannot be undone.");
+      if (!confirmed) return;
 
       try {
         await request(`/api/v1/polls/${pollId}`, {
@@ -346,24 +354,30 @@ async function loadPolls(force = false) {
       return;
     }
 
-    const validResults = results.filter(Boolean);
+    const pollsWithMeta = results
+      .filter(Boolean)
+      .map((result) => {
+        const basePoll = polls.find((poll) => String(poll.id) === String(result.poll.id));
 
-    const pollsWithMeta = validResults.map((result) => {
-      const basePoll = polls.find((p) => String(p.id) === String(result.poll.id));
-      return {
-        ...result.poll,
-        ownerUsername: basePoll?.owner_username ?? basePoll?.ownerUsername ?? "Unknown",
-        createdBy: basePoll?.owner_id ?? basePoll?.createdBy ?? result.poll.createdBy,
-      };
-    });
+        return {
+          ...result.poll,
+          ownerUsername:
+            basePoll?.owner_username ??
+            basePoll?.ownerUsername ??
+            "Unknown",
+          createdBy:
+            basePoll?.owner_id ??
+            basePoll?.createdBy ??
+            result.poll.createdBy,
+        };
+      });
 
     if (pollsWithMeta.length === 0) {
       pollsListEl.innerHTML = `<p class="subtitle">No polls available right now.</p>`;
       return;
     }
 
-    pollsListEl.innerHTML = pollsWithMeta.map((poll) => renderPollCard(poll)).join("");
-
+    pollsListEl.innerHTML = pollsWithMeta.map(renderPollCard).join("");
     bindVoteButtons();
     bindDeletePollButtons();
   } catch (error) {
@@ -388,125 +402,80 @@ function bindLoginForm() {
     const username = String(formData.get("username") ?? "").trim();
     const password = String(formData.get("password") ?? "").trim();
 
-    if (loginErrorEl) {
-      loginErrorEl.textContent = "";
-      loginErrorEl.classList.add("hidden");
-    }
+    showMessage(loginErrorEl);
 
     if (!username || username.length < 3) {
-      if (loginErrorEl) {
-        loginErrorEl.textContent = "Username must be at least 3 characters.";
-        loginErrorEl.classList.remove("hidden");
-      }
+      showMessage(loginErrorEl, "Username must be at least 3 characters.");
       return;
     }
 
     if (!password || password.length < 8) {
-      if (loginErrorEl) {
-        loginErrorEl.textContent = "Password must be at least 8 characters.";
-        loginErrorEl.classList.remove("hidden");
-      }
+      showMessage(loginErrorEl, "Password must be at least 8 characters.");
       return;
     }
 
     try {
       await userStore.login({ username, password });
-
       showAppView("polls");
       await loadPolls(true);
-
       loginForm.reset();
     } catch (error) {
-      if (loginErrorEl) {
-        loginErrorEl.textContent = error.message || "Failed to log in.";
-        loginErrorEl.classList.remove("hidden");
-      }
+      showMessage(loginErrorEl, error.message || "Failed to log in.");
     }
   });
 }
 
 function bindSignupForm() {
-  signupForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  document.addEventListener("user-create-submit", async (event) => {
+    const { username, password, consent, form } = event.detail;
 
-    const formData = new FormData(signupForm);
-    const username = String(formData.get("username") ?? "").trim();
-    const password = String(formData.get("password") ?? "").trim();
-    const tosAccepted = Boolean(formData.get("tosAccepted"));
-
-    if (signupErrorEl) {
-      signupErrorEl.textContent = "";
-      signupErrorEl.classList.add("hidden");
-    }
+    showMessage(signupErrorEl);
 
     if (!username || username.length < 3) {
-      if (signupErrorEl) {
-        signupErrorEl.textContent = "Username must be at least 3 characters.";
-        signupErrorEl.classList.remove("hidden");
-      }
+      showMessage(signupErrorEl, "Username must be at least 3 characters.");
       return;
     }
 
     if (!password || password.length < 8) {
-      if (signupErrorEl) {
-        signupErrorEl.textContent = "Password must be at least 8 characters.";
-        signupErrorEl.classList.remove("hidden");
-      }
+      showMessage(signupErrorEl, "Password must be at least 8 characters.");
       return;
     }
 
-    if (!tosAccepted) {
-      if (signupErrorEl) {
-        signupErrorEl.textContent = "You must accept Terms and Privacy.";
-        signupErrorEl.classList.remove("hidden");
-      }
+    if (!consent) {
+      showMessage(signupErrorEl, "You must accept Terms and Privacy.");
       return;
     }
 
     try {
-      await userStore.signup({ username, password, tosAccepted });
+      await userStore.signup({
+        username,
+        password,
+        tosAccepted: consent,
+      });
 
-      if (userStore.state.token) {
-        showAppView("polls");
-        await loadPolls(true);
-      }
+      showMessage(signupErrorEl, "");
 
-      signupForm.reset();
+      activateAuthTab("login");
+      form?.reset();
     } catch (error) {
-      if (signupErrorEl) {
-        signupErrorEl.textContent = error.message || "Failed to sign up.";
-        signupErrorEl.classList.remove("hidden");
-      }
+      showMessage(signupErrorEl, error.message || "Failed to sign up.");
     }
   });
 }
 
 function bindProfileForm() {
-  profileForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  document.addEventListener("user-edit-submit", async (event) => {
+    const { newUsername, newPassword, form } = event.detail;
 
-    const formData = new FormData(profileForm);
-    const newUsername = String(formData.get("newUsername") ?? "").trim();
-    const newPassword = String(formData.get("newPassword") ?? "").trim();
-
-    if (profileErrorEl) {
-      profileErrorEl.textContent = "";
-      profileErrorEl.classList.add("hidden");
-    }
+    showMessage(profileErrorEl);
 
     if (newUsername && newUsername.length < 3) {
-      if (profileErrorEl) {
-        profileErrorEl.textContent = "Username must be at least 3 characters.";
-        profileErrorEl.classList.remove("hidden");
-      }
+      showMessage(profileErrorEl, "Username must be at least 3 characters.");
       return;
     }
 
     if (newPassword && newPassword.length < 8) {
-      if (profileErrorEl) {
-        profileErrorEl.textContent = "Password must be at least 8 characters.";
-        profileErrorEl.classList.remove("hidden");
-      }
+      showMessage(profileErrorEl, "Password must be at least 8 characters.");
       return;
     }
 
@@ -519,27 +488,22 @@ function bindProfileForm() {
 
     try {
       await userStore.updateMe(patch);
-      profileForm.reset();
+      showMessage(profileErrorEl, "Profile updated successfully.");
+      form?.reset();
       renderProfileInfo();
     } catch (error) {
-      if (profileErrorEl) {
-        profileErrorEl.textContent = error.message || "Failed to update profile.";
-        profileErrorEl.classList.remove("hidden");
-      }
+      showMessage(profileErrorEl, error.message || "Failed to update profile.");
     }
   });
 
-  deleteAccountBtn?.addEventListener("click", async () => {
-    const ok = confirm("Delete your account? This cannot be undone.");
-    if (!ok) return;
+  document.addEventListener("user-delete-click", async () => {
+    const confirmed = confirm("Delete your account? This cannot be undone.");
+    if (!confirmed) return;
 
     try {
       await userStore.deleteMe();
     } catch (error) {
-      if (profileErrorEl) {
-        profileErrorEl.textContent = error.message || "Failed to delete account.";
-        profileErrorEl.classList.remove("hidden");
-      }
+      showMessage(profileErrorEl, error.message || "Failed to delete account.");
     }
   });
 }
@@ -561,9 +525,17 @@ function bindCreatePollForm() {
       .map((value) => String(value ?? "").trim())
       .filter(Boolean);
 
-    if (createPollMessageEl) {
-      createPollMessageEl.textContent = "";
+    if (!title) {
+      showMessage(createPollMessageEl, "Title is required.");
+      return;
     }
+
+    if (options.length < 2) {
+      showMessage(createPollMessageEl, "At least two options are required.");
+      return;
+    }
+
+    showMessage(createPollMessageEl);
 
     try {
       await request("/api/v1/polls", {
@@ -573,35 +545,26 @@ function bindCreatePollForm() {
       });
 
       createPollForm.reset();
-
-      if (createPollMessageEl) {
-        createPollMessageEl.textContent = "Poll created successfully.";
-      }
-
+      showMessage(createPollMessageEl, "Poll created successfully.");
       showAppView("polls");
       await loadPolls(true);
     } catch (error) {
-      if (createPollMessageEl) {
-        createPollMessageEl.textContent = error.message || "Failed to create poll.";
-      }
+      showMessage(createPollMessageEl, error.message || "Failed to create poll.");
     }
   });
 }
 
-async function clearOldServiceWorkers() {
+function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
 
-  try {
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(registrations.map((registration) => registration.unregister()));
-
-    if ("caches" in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((key) => caches.delete(key)));
+  window.addEventListener("load", async () => {
+    try {
+      const registration = await navigator.serviceWorker.register("/service-worker.js");
+      console.log("Service worker registered:", registration);
+    } catch (error) {
+      console.error("Service worker registration failed:", error);
     }
-  } catch (error) {
-    console.error("Failed to clear service workers/caches:", error);
-  }
+  });
 }
 
 async function init() {
@@ -613,7 +576,7 @@ async function init() {
   bindSignupForm();
   bindProfileForm();
   bindCreatePollForm();
-  await clearOldServiceWorkers();
+  registerServiceWorker();
 
   await userStore.bootstrap();
 
@@ -625,14 +588,13 @@ async function init() {
   }
 }
 
-userStore.addEventListener("change", async () => {
+userStore.addEventListener("change", () => {
   renderCurrentUserInHeader();
   updateView();
   renderProfileInfo();
 
-  if (!userStore.state.token) {
-    if (pollsListEl) pollsListEl.innerHTML = "";
-    return;
+  if (!userStore.state.token && pollsListEl) {
+    pollsListEl.innerHTML = "";
   }
 });
 

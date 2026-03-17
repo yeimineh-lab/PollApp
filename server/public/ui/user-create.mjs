@@ -1,101 +1,71 @@
-﻿import { userStore } from "../data/userStore.mjs";
-import { t } from "../i18n/index.mjs";
-
-class UserCreate extends HTMLElement {
-  #onChange;
-
-  constructor() {
-    super();
-    this.#onChange = () => this.render();
-  }
-
+﻿class UserCreate extends HTMLElement {
   connectedCallback() {
-    userStore.addEventListener("change", this.#onChange);
-    this.render();
-  }
-
-  disconnectedCallback() {
-    userStore.removeEventListener("change", this.#onChange);
-  }
-
-  render() {
-    const { status } = userStore.state;
-
     this.innerHTML = `
-      <section class="panel">
-        <h2>${t("createUser")}</h2>
+      <form class="panel-form" id="signupForm" novalidate>
+        <label for="signupUsername">Username</label>
+        <input
+          id="signupUsername"
+          name="username"
+          type="text"
+          minlength="3"
+          autocomplete="username"
+          required
+        />
 
-        <form id="f" novalidate>
-          <label for="username">${t("username")}</label>
-          <input id="username" name="username" type="text" minlength="3" required />
+        <label for="signupPassword">Password</label>
+        <input
+          id="signupPassword"
+          name="password"
+          type="password"
+          minlength="8"
+          autocomplete="new-password"
+          required
+        />
 
-          <label for="password">${t("password")}</label>
-          <input id="password" name="password" type="password" minlength="8" required />
-
-          <label class="check-row">
-            <input name="tosAccepted" type="checkbox" required />
-            <span>
-              ${t("acceptTerms")}
-              <a href="/TERMS.MD">${t("terms")}</a>
-              ${t("and")}
-              <a href="/PRIVACY.MD">${t("privacy")}</a>
-            </span>
+        <div class="consent-row">
+          <input
+            id="signupConsent"
+            name="consent"
+            type="checkbox"
+            required
+          />
+          <label for="signupConsent" class="consent-label">
+            I accept the
+            <a href="/terms.html" target="_blank" rel="noopener">Terms of Service</a>
+            and
+            <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
           </label>
+        </div>
 
-          <div class="row">
-            <button class="primary" type="submit" ${status === "loading" ? "disabled" : ""}>
-              ${t("signUp")}
-            </button>
-          </div>
-        </form>
-      </section>
+        <div class="row">
+          <button type="submit">Sign up</button>
+        </div>
+      </form>
     `;
 
-    const form = this.querySelector("#f");
-    const usernameInput = this.querySelector("#username");
-    const passwordInput = this.querySelector("#password");
-    const tosInput = this.querySelector('input[name="tosAccepted"]');
+    const form = this.querySelector("#signupForm");
 
-    form.onsubmit = async (e) => {
-      e.preventDefault();
+    form?.addEventListener("submit", (event) => {
+      event.preventDefault();
 
-      usernameInput.setCustomValidity("");
-      passwordInput.setCustomValidity("");
-      tosInput.setCustomValidity("");
+      const formData = new FormData(form);
 
-      if (!usernameInput.value.trim()) {
-        usernameInput.setCustomValidity(t("requiredField"));
-      } else if (usernameInput.value.trim().length < 3) {
-        usernameInput.setCustomValidity(t("usernameTooShort"));
-      }
-
-      if (!passwordInput.value.trim()) {
-        passwordInput.setCustomValidity(t("requiredField"));
-      } else if (passwordInput.value.trim().length < 8) {
-        passwordInput.setCustomValidity(t("passwordTooShort"));
-      }
-
-      if (!tosInput.checked) {
-        tosInput.setCustomValidity(t("acceptTermsRequired"));
-      }
-
-      if (!form.reportValidity()) return;
-
-      const fd = new FormData(form);
-
-      await userStore.signup({
-        username: String(fd.get("username") || ""),
-        password: String(fd.get("password") || ""),
-        tosAccepted: Boolean(fd.get("tosAccepted")),
-      });
-
-      form.reset();
-    };
-
-    usernameInput.oninput = () => usernameInput.setCustomValidity("");
-    passwordInput.oninput = () => passwordInput.setCustomValidity("");
-    tosInput.onchange = () => tosInput.setCustomValidity("");
+      this.dispatchEvent(
+        new CustomEvent("user-create-submit", {
+          bubbles: true,
+          composed: true,
+          detail: {
+            username: String(formData.get("username") ?? "").trim(),
+            password: String(formData.get("password") ?? "").trim(),
+            consent: Boolean(formData.get("consent")),
+            form,
+          },
+        }),
+      );
+    });
   }
 }
 
-customElements.define("user-create", UserCreate);
+if (!customElements.get("user-create")) {
+  customElements.define("user-create", UserCreate);
+}
