@@ -1,166 +1,178 @@
-﻿# PollApp
+﻿## PollApp
 
-A simple REST-based poll application built with **Node.js** and **Express**, using **ESM modules only**.
+A simple REST-based poll application built with **Node.js** and **Express**, using **ES Modules (ESM only)**.
 
 ---
 
-##  Features
+## Features
 
 Users can:
 
-- Create an account
-- Log in and log out
-- Create polls
-- List polls
-- Delete their own account
+- Create an account  
+- Log in and log out  
+- Create polls  
+- View polls  
+- Vote on polls  
+- Delete their own account  
 
 ---
 
-##  Tech Stack
+## Tech Stack
 
-- Node.js (ESM only, no CommonJS)
+- Node.js (ESM only — no CommonJS)
 - Express
-- JSON file storage (custom `jsonStore`)
-- REST-style API
-- OpenAPI 3 specification
+- PostgreSQL (pg)
+- REST API
+- OpenAPI 3
 
 ---
 
-##  Project Structure
+## Project Structure
 
 ```text
-server/
-├── src/
-│   ├── app.mjs              # Express configuration
-│   ├── server.mjs           # Server entry point
-│   ├── routes/              # Route handlers (no business logic)
-│   ├── services/            # Business logic layer
-│   ├── storage/             # JSON storage layer
-│   ├── auth/                # Session handling
-│   ├── middleware/          # errorHandler, notFound, requireAuth
-│   ├── domain/              # AppError subclasses
-│   └── config/              # Path configuration
+PollApp/
+├── server/
+│   ├── src/
+│   │   ├── app.mjs
+│   │   ├── server.mjs
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── storage/
+│   │   ├── auth/
+│   │   ├── middleware/
+│   │   ├── domain/
+│   │   └── config/
+│   │
+│   ├── public/
+│   ├── data/
+│   ├── docs/
+│   │   └── openapi.yaml
+│   │
+│   ├── package.json
+│   └── package-lock.json
 │
-├── data/                    # JSON data files
-├── public/                  # Frontend files
-├── docs/
-│   └── openapi.yaml         # OpenAPI 3 documentation
-
+├── README.md
+└── .gitignore
 How to Run Locally
-
-Clone the repository and run:
-
 cd server
 npm install
 npm start
 
-The server runs at:
+Server runs at:
 
 http://localhost:3000
+API
 
-Health Check
-GET http://localhost:3000/health
+Base URL:
 
-API Base URL
 http://localhost:3000/api/v1
 
-Live URL: https://pollapp-1.onrender.com
+Health check:
 
+GET /health
+Live Demo
+https://pollapp-1.onrender.com
 API Documentation
 
-The API is documented using OpenAPI 3.
-
-OpenAPI file:
+OpenAPI specification:
 
 server/docs/openapi.yaml
-
 Architecture
 
-This project follows a clear separation of concerns:
-
-ESM-only Backend
-
-Uses ES modules (import / export)
-
-No CommonJS (require)
-
-Layered Structure
+The application follows a layered architecture:
 
 Routes
-→ HTTP layer only (no domain/business logic)
+
+Handles HTTP requests/responses
+
+No business logic
 
 Services
-→ Business logic and validation
+
+Core business logic
+
+Validation and rules
 
 Storage
-→ JSON-based persistence layer
+
+Data persistence (PostgreSQL / JSON)
 
 Middleware
-→ Authentication and centralized error handling
+
+Authentication
+
+Error handling
 
 Domain
-→ Custom error classes (e.g., AppError subclasses)
 
+Custom error classes (AppError, etc.)
 
-## Additional Features (Assignment Implementation)
+Progressive Web App (PWA)
 
-The application was extended with the following features:
+The frontend is implemented as a PWA.
 
-### Internationalization (I18n)
+Features:
 
-The frontend supports **English and Norwegian**.
+Installable application
 
-- Language is detected automatically using `navigator.language`
-- Translation files are located in:
-  - `public/i18n/en.mjs`
-  - `public/i18n/no.mjs`
-- UI labels and validation messages change based on the browser language
-- Server errors also respect the `Accept-Language` header
+Offline support
 
----
+Fast loading with caching
 
-### Progressive Web App (PWA)
+Service Worker
 
-The application can be installed as a PWA.
+The service worker caches:
 
-Implemented using:
+HTML
 
-- `manifest.webmanifest`
-- `service-worker.js`
-- application icons
+CSS
 
----
+JavaScript
 
-### Service Worker Caching
+Manifest
 
-A service worker caches important files such as:
+Icons
 
-- `index.html`
-- `app.css`
-- `app.mjs`
-- `manifest.webmanifest`
-- icons
+Strategy:
 
-This improves loading performance and allows the application to function without network access.
+Cache-first for static assets
 
----
+Network-first for navigation
 
-### Offline Mode
+Offline fallback page
 
-If the network is unavailable:
+Offline Mode
 
-- cached files are served
-- an offline fallback page (`offline.html`) is displayed
+When offline:
 
----
+Cached files are served
 
-### Accessibility
+offline.html is shown for navigation requests
 
-Accessibility was tested using **Lighthouse**.
+Internationalization (I18n)
 
-Results:
+Supports:
 
-- Accessibility: **93**
-- Best Practices: **100**
-- SEO: **90**
+English
 
+Norwegian
+
+Features:
+
+Auto-detects browser language
+
+Dynamic UI translations
+
+Server respects Accept-Language
+
+Accessibility & Quality
+
+Tested using Lighthouse:
+
+Performance: 100
+
+Accessibility: 100
+
+Best Practices: 100
+
+SEO: 90
