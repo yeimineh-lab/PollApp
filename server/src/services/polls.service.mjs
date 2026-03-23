@@ -1,12 +1,16 @@
-import { getUserById } from "../storage/users.pgStore.mjs";
 import {
   insertPoll,
   listPollRows,
+  listVisiblePollRows,
   getPollById,
   deletePollById,
 } from "../storage/polls.pgStore.mjs";
 import { getVoteByPollAndUser } from "../storage/votes.pgStore.mjs";
-import { ValidationError, NotFoundError } from "../middleware/errors.mjs";
+import {
+  ValidationError,
+  NotFoundError,
+  ForbiddenError,
+} from "../middleware/errors.mjs";
 import { pool } from "../storage/db.mjs";
 
 function normalizeTitle(t) {
@@ -22,14 +26,18 @@ function normalizeOptions(options) {
     .filter(Boolean);
 }
 
-export async function listPolls() {
-  const polls = await listPollRows();
+export async function listPolls({ userId = null } = {}) {
+  const polls = userId
+    ? await listPollRows()
+    : await listVisiblePollRows({ userId: null });
+
   return { polls };
 }
 
-export async function createPoll({ body, userId }) {
+export async function createPoll({ body, userId = null, guestId = null }) {
   const title = normalizeTitle(body?.title);
   const normalizedOptions = normalizeOptions(body?.options);
+  const isPublic = true;
 
   if (!title || title.length < 3) {
     throw new ValidationError("Poll title must be at least 3 characters.");
@@ -39,26 +47,38 @@ export async function createPoll({ body, userId }) {
     throw new ValidationError("Poll must have at least 2 valid options.");
   }
 
-  const owner = await getUserById(userId);
-
-  if (!owner) {
-    throw new NotFoundError("User not found");
+  if (!userId && (!guestId || guestId.trim().length === 0)) {
+    throw new ValidationError("A user or guest id is required to create a poll.");
   }
 
   const poll = await insertPoll({
     ownerId: userId,
     title,
     description: normalizedOptions.join(" | "),
+    isPublic,
   });
 
-  return { poll };
+  return {
+    poll: {
+      ...poll,
+      guestId: userId ? null : guestId,
+    },
+  };
 }
 
-export async function getPollResults({ pollId, userId }) {
+export async function getPollResults({ pollId, userId = null }) {
   const poll = await getPollById(pollId);
 
   if (!poll) {
     throw new NotFoundError("Poll not found");
+  }
+
+  const canAccess =
+    Boolean(poll.is_public) ||
+    (userId && poll.owner_id && String(poll.owner_id) === String(userId));
+
+  if (!canAccess) {
+    throw new ForbiddenError("You do not have access to this poll.");
   }
 
   const description = poll.description ?? "";
@@ -88,8 +108,9 @@ export async function getPollResults({ pollId, userId }) {
     poll: {
       id: poll.id,
       title: poll.title,
+      isPublic: Boolean(poll.is_public),
       createdBy: poll.owner_id,
-      ownerUsername: poll.owner_username,
+      ownerUsername: poll.owner_username ?? "Guest",
       userVote: existingVote ? Number(existingVote.option_index) : null,
       options: options.map((text, index) => ({
         optionIndex: index,
@@ -107,7 +128,7 @@ export async function deletePoll({ pollId, userId }) {
     throw new NotFoundError("Poll not found");
   }
 
-  if (String(poll.owner_id) !== String(userId)) {
+  if (!poll.owner_id || String(poll.owner_id) !== String(userId)) {
     throw new ValidationError("You can only delete your own polls.");
   }
 
@@ -117,6 +138,6 @@ export async function deletePoll({ pollId, userId }) {
     id: poll.id,
     title: poll.title,
     createdBy: poll.owner_id,
-    ownerUsername: poll.owner_username,
+    ownerUsername: poll.owner_username ?? "Guest",
   };
 }

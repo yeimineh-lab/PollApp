@@ -1,18 +1,20 @@
 import express from "express";
-import { requireAuth } from "../middleware/requireAuth.mjs";
+import { optionalAuth } from "../middleware/optionalAuth.mjs";
 import { voteOnPoll } from "../services/votes.service.mjs";
 
 const router = express.Router();
 
-router.post("/polls/:id/vote", requireAuth(), async (req, res, next) => {
+router.post("/polls/:id/vote", optionalAuth(), async (req, res, next) => {
   try {
     const pollId = Number(req.params.id);
-    const userId = String(req.auth.userId);
     const optionIndex = Number(req.body.optionIndex);
+    const userId = req.auth?.userId ? String(req.auth.userId) : null;
+    const guestId = req.body.guestId ? String(req.body.guestId) : null;
 
     const vote = await voteOnPoll({
       pollId,
       userId,
+      guestId,
       optionIndex,
     });
 

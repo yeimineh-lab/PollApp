@@ -10,7 +10,7 @@
 
     <link rel="stylesheet" href="/app.css" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" href="/favicon.ico"
+    <link rel="icon" href="/favicon.ico" />
     <meta name="theme-color" content="#ffffff" />
 
     <script type="module" src="/app.mjs" defer></script>
@@ -19,155 +19,224 @@
   <body>
     <div class="container">
       <header class="site-header">
-        <div class="brand">
-          <h1 id="brandTitle">Simple Poll</h1>
-        </div>
+        <div class="topbar">
+          <div class="brand-wrap">
+            <h1 id="brandTitle">Simple Poll</h1>
+            <p id="pageHint" class="page-hint">
+              Welcome to Simple Poll. Browse public polls, create guest polls, or sign in to manage your account and create account-only polls.
+            </p>
+          </div>
 
-        <p id="pageHint" class="page-hint">
-          Log in or create an account to continue.
-        </p>
+          <div class="account-menu-wrap">
+            <button
+              id="accountMenuBtn"
+              class="account-menu-btn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="accountDropdown"
+            >
+              Account
+            </button>
+
+            <div id="accountDropdown" class="account-dropdown hidden">
+              <div id="guestMenu">
+                <div
+                  class="auth-tabs"
+                  role="tablist"
+                  aria-label="Authentication"
+                >
+                  <button
+                    id="showLoginBtn"
+                    class="tab-btn active"
+                    type="button"
+                    role="tab"
+                    aria-selected="true"
+                    aria-controls="loginPanel"
+                  >
+                    Login
+                  </button>
+                  <button
+                    id="showSignupBtn"
+                    class="tab-btn"
+                    type="button"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="signupPanel"
+                  >
+                    Create account
+                  </button>
+                </div>
+
+                <div
+                  id="loginPanel"
+                  class="auth-panel"
+                  role="tabpanel"
+                  aria-labelledby="showLoginBtn"
+                >
+                  <section class="panel">
+                    <p
+                      id="loginError"
+                      class="form-error hidden"
+                      aria-live="polite"
+                    ></p>
+
+                    <form id="loginForm" novalidate>
+                      <label for="loginUsername">Username</label>
+                      <input
+                        id="loginUsername"
+                        name="username"
+                        type="text"
+                        minlength="3"
+                        autocomplete="username"
+                        required
+                      />
+
+                      <label for="loginPassword">Password</label>
+                      <input
+                        id="loginPassword"
+                        name="password"
+                        type="password"
+                        minlength="8"
+                        autocomplete="current-password"
+                        required
+                      />
+
+                      <div class="row">
+                        <button type="submit">Login</button>
+                      </div>
+                    </form>
+                  </section>
+                </div>
+
+                <div
+                  id="signupPanel"
+                  class="auth-panel hidden"
+                  role="tabpanel"
+                  aria-labelledby="showSignupBtn"
+                >
+                  <section class="panel">
+                    <p
+                      id="signupError"
+                      class="form-error hidden"
+                      aria-live="polite"
+                    ></p>
+
+                    <user-create></user-create>
+                  </section>
+                </div>
+              </div>
+
+              <div id="userMenu" class="hidden">
+                <div class="account-user-box">
+                  <strong id="accountMenuUsername">User</strong>
+                  <span class="account-user-subtitle">Signed in</span>
+                </div>
+
+                <div class="account-menu-actions">
+                  <button
+                    class="account-link-btn"
+                    data-view="profile"
+                    type="button"
+                  >
+                    Profile
+                  </button>
+                  <button
+                    id="logoutBtn"
+                    class="account-link-btn"
+                    type="button"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <nav
           id="mainNav"
-          class="main-nav hidden"
+          class="main-nav"
           aria-label="Main navigation"
         >
           <button
             class="nav-btn active"
+            data-view="home"
+            type="button"
+          >
+            Home
+          </button>
+          <button
+            class="nav-btn"
             data-view="polls"
             type="button"
           >
-            Polls
+            Public Polls
           </button>
           <button
             class="nav-btn"
             data-view="create"
             type="button"
           >
-            Create poll
-          </button>
-          <button
-            class="nav-btn"
-            data-view="profile"
-            type="button"
-          >
-            Profile
-          </button>
-          <button
-            id="logoutBtn"
-            class="nav-btn"
-            type="button"
-          >
-            Logout
+            Create Poll
           </button>
         </nav>
       </header>
 
       <main>
-        <section id="authView" class="auth-view">
-          <div class="auth-shell">
-            <section class="card auth-card">
-              <div
-                class="auth-tabs"
-                role="tablist"
-                aria-label="Authentication"
-              >
-                <button
-                  id="showLoginBtn"
-                  class="tab-btn active"
-                  type="button"
-                  role="tab"
-                  aria-selected="true"
-                  aria-controls="loginPanel"
-                >
-                  Login
-                </button>
-                <button
-                  id="showSignupBtn"
-                  class="tab-btn"
-                  type="button"
-                  role="tab"
-                  aria-selected="false"
-                  aria-controls="signupPanel"
-                >
-                  Create account
-                </button>
-              </div>
+        <section id="appView" class="app-view">
+          <section id="homeView" class="view-section">
+            <div class="grid">
+              <section class="card col-12 hero-card">
+                <h2>Welcome to Simple Poll</h2>
 
-              <div
-                id="loginPanel"
-                class="auth-panel"
-                role="tabpanel"
-                aria-labelledby="showLoginBtn"
-              >
-                <section class="panel">
-                  <h2>Login</h2>
+                <p class="subtitle">
+                  Simple Poll lets you create polls quickly, browse public polls, and vote anonymously.
+                </p>
 
-                  <p
-                    id="loginError"
-                    class="form-error hidden"
-                    aria-live="polite"
-                  ></p>
+                <div class="home-copy">
+                  <section class="home-info-block">
+                    <h3>How the app works</h3>
+                    <p>
+                      You can use Simple Poll as a guest or with an account. Guests can create public polls and vote on public polls.
+                      If you create an account, you can also manage your profile and access account-only polls.
+                    </p>
+                  </section>
 
-                  <form id="loginForm" novalidate>
-                    <label for="loginUsername">Username</label>
-                    <input
-                      id="loginUsername"
-                      name="username"
-                      type="text"
-                      minlength="3"
-                      autocomplete="username"
-                      required
-                    />
+                  <section class="home-info-block">
+                    <h3>Public polls</h3>
+                    <p>
+                      Public polls are visible to everyone. Anyone can open them and vote anonymously. To see them, go to the
+                      <strong>Public Polls</strong> page.
+                    </p>
+                  </section>
 
-                    <label for="loginPassword">Password</label>
-                    <input
-                      id="loginPassword"
-                      name="password"
-                      type="password"
-                      minlength="8"
-                      autocomplete="current-password"
-                      required
-                    />
+                  <section class="home-info-block">
+                    <h3>Creating polls</h3>
+                    <p>
+                      You can create a guest poll without logging in. If you want more control and access to account-based features,
+                      create an account and sign in.
+                    </p>
+                  </section>
 
-                    <div class="row">
-                      <button type="submit">Login</button>
-                    </div>
-                  </form>
-                </section>
-              </div>
+                  <section class="home-info-block">
+                    <h3>Voting</h3>
+                    <p>
+                      Voting is anonymous. The app shows totals and percentages, not who voted. Public guest voting is limited in the browser
+                      so the same device cannot easily vote multiple times on the same poll.
+                    </p>
+                  </section>
+                </div>
+              </section>
+            </div>
+          </section>
 
-              <div
-                id="signupPanel"
-                class="auth-panel hidden"
-                role="tabpanel"
-                aria-labelledby="showSignupBtn"
-              >
-                <section class="panel">
-                  <h2>Create account</h2>
-
-                  <p
-                    id="signupError"
-                    class="form-error hidden"
-                    aria-live="polite"
-                  ></p>
-
-                  <user-create></user-create>
-                </section>
-              </div>
-            </section>
-          </div>
-        </section>
-
-        <section id="appView" class="app-view hidden">
-          <section id="pollsView" class="view-section">
+          <section id="pollsView" class="view-section hidden">
             <div class="grid">
               <section class="card col-12">
                 <h2>Available polls</h2>
 
                 <p class="subtitle">
-                  Anonymous voting. Users cannot see who voted, only totals and
-                  percentages.
+                  Public polls are visible to everyone. You can also create a guest poll without logging in.
                 </p>
 
                 <div id="pollsList" aria-live="polite"></div>
@@ -181,8 +250,7 @@
                 <h2>Create a poll</h2>
 
                 <p class="subtitle">
-                  Create a poll that other logged-in users can vote on
-                  anonymously.
+                  Create a public poll that other guests and users can vote on anonymously.
                 </p>
 
                 <form id="createPollForm" class="panel">

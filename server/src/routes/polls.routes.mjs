@@ -1,13 +1,17 @@
 import express from "express";
 import { requireAuth } from "../middleware/requireAuth.mjs";
+import { optionalAuth } from "../middleware/optionalAuth.mjs";
 import * as pollsService from "../services/polls.service.mjs";
 
 const router = express.Router();
 
 // GET /api/v1/polls
-router.get("/polls", requireAuth(), async (req, res, next) => {
+router.get("/polls", optionalAuth(), async (req, res, next) => {
   try {
-    const result = await pollsService.listPolls();
+    const result = await pollsService.listPolls({
+      userId: req.auth?.userId ?? null,
+    });
+
     res.json(result);
   } catch (error) {
     next(error);
@@ -15,12 +19,13 @@ router.get("/polls", requireAuth(), async (req, res, next) => {
 });
 
 // GET /api/v1/polls/:id/results
-router.get("/polls/:id/results", requireAuth(), async (req, res, next) => {
+router.get("/polls/:id/results", optionalAuth(), async (req, res, next) => {
   try {
     const result = await pollsService.getPollResults({
       pollId: req.params.id,
-      userId: req.auth.userId,
+      userId: req.auth?.userId ?? null,
     });
+
     res.json(result);
   } catch (error) {
     next(error);
@@ -28,12 +33,14 @@ router.get("/polls/:id/results", requireAuth(), async (req, res, next) => {
 });
 
 // POST /api/v1/polls
-router.post("/polls", requireAuth(), async (req, res, next) => {
+router.post("/polls", optionalAuth(), async (req, res, next) => {
   try {
     const result = await pollsService.createPoll({
       body: req.body,
-      userId: req.auth.userId,
+      userId: req.auth?.userId ?? null,
+      guestId: req.body.guestId ? String(req.body.guestId) : null,
     });
+
     res.status(201).json(result);
   } catch (error) {
     next(error);

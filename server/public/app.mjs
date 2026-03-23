@@ -9,17 +9,23 @@ import "./ui/user-delete.mjs";
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
-const authView = $("#authView");
 const appView = $("#appView");
 const pageHintEl = $("#pageHint");
 const mainNav = $("#mainNav");
 const brandTitleEl = $("#brandTitle");
+
+const accountMenuBtn = $("#accountMenuBtn");
+const accountDropdown = $("#accountDropdown");
+const guestMenu = $("#guestMenu");
+const userMenu = $("#userMenu");
+const accountMenuUsername = $("#accountMenuUsername");
 
 const showLoginBtn = $("#showLoginBtn");
 const showSignupBtn = $("#showSignupBtn");
 const loginPanel = $("#loginPanel");
 const signupPanel = $("#signupPanel");
 
+const homeView = $("#homeView");
 const pollsView = $("#pollsView");
 const createPollView = $("#createPollView");
 const profileView = $("#profileView");
@@ -37,8 +43,20 @@ const profileErrorEl = $("#profileError");
 const profileCurrentUsernameEl = $("#profileCurrentUsername");
 
 const currentLang = detectLanguage();
-let currentAppView = "polls";
+let currentAppView = "home";
 let pollsLoading = false;
+
+function getGuestId() {
+  const storageKey = "simple_poll_guest_id";
+  let guestId = localStorage.getItem(storageKey);
+
+  if (!guestId) {
+    guestId = crypto.randomUUID();
+    localStorage.setItem(storageKey, guestId);
+  }
+
+  return guestId;
+}
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({
@@ -54,12 +72,7 @@ function showMessage(element, message = "") {
   if (!element) return;
 
   element.textContent = message;
-
-  if (message) {
-    element.classList.remove("hidden");
-  } else {
-    element.classList.add("hidden");
-  }
+  element.classList.toggle("hidden", !message);
 }
 
 function applyTranslations() {
@@ -73,9 +86,7 @@ function applyTranslations() {
 
 function renderCurrentUserInHeader() {
   if (!brandTitleEl) return;
-
-  const { token, me } = userStore.state;
-  brandTitleEl.textContent = token && me?.username ? me.username : "Simple Poll";
+  brandTitleEl.textContent = "Simple Poll";
 }
 
 function renderProfileInfo() {
@@ -105,32 +116,76 @@ function bindAuthTabs() {
   showSignupBtn?.addEventListener("click", () => activateAuthTab("signup"));
 }
 
+function closeAccountMenu() {
+  accountDropdown?.classList.add("hidden");
+  accountMenuBtn?.setAttribute("aria-expanded", "false");
+}
+
 function showAppView(viewName) {
   currentAppView = viewName;
 
+  const isLoggedIn = Boolean(userStore.state.token);
+
+  homeView?.classList.toggle("hidden", viewName !== "home");
   pollsView?.classList.toggle("hidden", viewName !== "polls");
   createPollView?.classList.toggle("hidden", viewName !== "create");
-  profileView?.classList.toggle("hidden", viewName !== "profile");
+  profileView?.classList.toggle("hidden", !isLoggedIn || viewName !== "profile");
 
   $$(".nav-btn[data-view]").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === viewName);
   });
 
-  if (viewName === "profile") {
+  if (viewName === "profile" && isLoggedIn) {
     renderProfileInfo();
   }
 }
 
-function bindNav() {
-  $$(".nav-btn[data-view]").forEach((button) => {
+function bindAccountMenu() {
+  accountMenuBtn?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    accountDropdown?.classList.toggle("hidden");
+
+    const isOpen = !accountDropdown?.classList.contains("hidden");
+    accountMenuBtn?.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!accountDropdown || !accountMenuBtn) return;
+
+    const clickedInside =
+      accountDropdown.contains(event.target) ||
+      accountMenuBtn.contains(event.target);
+
+    if (!clickedInside) {
+      closeAccountMenu();
+    }
+  });
+
+  document.querySelectorAll(".account-link-btn[data-view]").forEach((button) => {
     button.addEventListener("click", () => {
       showAppView(button.dataset.view);
+      closeAccountMenu();
+    });
+  });
+}
+
+function bindNav() {
+  $$(".nav-btn[data-view]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const viewName = button.dataset.view;
+      showAppView(viewName);
+
+      if (viewName === "polls") {
+        await loadPolls(true);
+      }
     });
   });
 
   logoutBtn?.addEventListener("click", async () => {
     try {
       await userStore.logout();
+      closeAccountMenu();
+      showAppView("home");
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -138,15 +193,26 @@ function bindNav() {
 }
 
 function updateView() {
-  const { token } = userStore.state;
+  const { token, me } = userStore.state;
+
+  appView?.classList.remove("hidden");
+  mainNav?.classList.remove("hidden");
 
   if (token) {
-    authView?.classList.add("hidden");
-    appView?.classList.remove("hidden");
-    mainNav?.classList.remove("hidden");
-
     if (pageHintEl) {
-      pageHintEl.textContent = "Create polls, vote anonymously, and manage your account.";
+      pageHintEl.textContent =
+        "Welcome to Simple Poll. Browse public polls, create guest polls, or manage your account-only polls and profile.";
+    }
+
+    if (accountMenuBtn) {
+      accountMenuBtn.textContent = me?.username ?? "Account";
+    }
+
+    guestMenu?.classList.add("hidden");
+    userMenu?.classList.remove("hidden");
+
+    if (accountMenuUsername) {
+      accountMenuUsername.textContent = me?.username ?? "User";
     }
 
     showAppView(currentAppView);
@@ -154,15 +220,25 @@ function updateView() {
     return;
   }
 
-  authView?.classList.remove("hidden");
-  appView?.classList.add("hidden");
-  mainNav?.classList.add("hidden");
-
   if (pageHintEl) {
-    pageHintEl.textContent = "Log in or create an account to continue.";
+    pageHintEl.textContent =
+      "Welcome to Simple Poll. Browse public polls, create guest polls, or sign in to manage your account and create account-only polls.";
   }
 
+  if (accountMenuBtn) {
+    accountMenuBtn.textContent = "Account";
+  }
+
+  guestMenu?.classList.remove("hidden");
+  userMenu?.classList.add("hidden");
+
   activateAuthTab("login");
+
+  if (currentAppView === "profile") {
+    showAppView("home");
+  } else {
+    showAppView(currentAppView);
+  }
 }
 
 function renderPollCard(poll) {
@@ -180,16 +256,16 @@ function renderPollCard(poll) {
     null;
 
   const myId = me?.id ?? me?.userId ?? null;
-
   const isOwner = Boolean(ownerId && myId && String(ownerId) === String(myId));
   const canDelete = isOwner;
   const userVote = poll.userVote;
+  const guestHasVoted = localStorage.getItem(`voted_poll_${poll.id}`) === "true";
+  const hasVoted = (userVote !== null && userVote !== undefined) || guestHasVoted;
 
   const optionsHtml = (poll.options ?? [])
     .map((option) => {
       const votes = Number(option.votes || 0);
       const percent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
-      const hasVoted = userVote !== null && userVote !== undefined;
       const isUsersOption = Number(userVote) === Number(option.optionIndex);
 
       return `
@@ -232,8 +308,10 @@ function renderPollCard(poll) {
       <div class="poll-card-head">
         <div>
           <h3>${escapeHtml(poll.title)}</h3>
-          <div class="poll-meta">Created by ${escapeHtml(poll.ownerUsername ?? "Unknown")}</div>
-          <div class="poll-meta">Anonymous voting · Total votes: ${totalVotes}</div>
+          <div class="poll-meta">Created by ${escapeHtml(poll.ownerUsername ?? "Guest")}</div>
+          <div class="poll-meta">
+            ${poll.isPublic ? "Public poll" : "Private poll"} · Total votes: ${totalVotes}
+          </div>
         </div>
 
         ${
@@ -263,7 +341,7 @@ function bindVoteButtons() {
     button.addEventListener("click", async () => {
       if (button.disabled) return;
 
-      const { token } = userStore.state;
+      const { token, me } = userStore.state;
       const pollId = button.dataset.pollId;
       const optionIndex = Number(button.dataset.optionIndex);
 
@@ -271,9 +349,13 @@ function bindVoteButtons() {
         await request(`/api/v1/polls/${pollId}/vote`, {
           method: "POST",
           token,
-          body: { optionIndex },
+          body: {
+            optionIndex,
+            guestId: !token || !me ? getGuestId() : undefined,
+          },
         });
 
+        localStorage.setItem(`voted_poll_${pollId}`, "true");
         await loadPolls(true);
       } catch (error) {
         alert(error.message || "Failed to vote.");
@@ -307,25 +389,14 @@ function bindDeletePollButtons() {
 
 async function loadPolls(force = false) {
   if (!pollsListEl) return;
+  if (pollsLoading && !force) return;
 
   const { token } = userStore.state;
-
-  if (!token) {
-    pollsListEl.innerHTML = "";
-    return;
-  }
-
-  if (pollsLoading && !force) return;
   pollsLoading = true;
 
   try {
     const data = await request("/api/v1/polls", { token });
     const polls = data?.polls ?? data ?? [];
-
-    if (!userStore.state.token) {
-      pollsListEl.innerHTML = "";
-      return;
-    }
 
     if (!Array.isArray(polls) || polls.length === 0) {
       pollsListEl.innerHTML = `<p class="subtitle">No polls yet.</p>`;
@@ -339,20 +410,11 @@ async function loadPolls(force = false) {
             token: userStore.state.token,
           });
         } catch (error) {
-          if (error?.status === 401 || !userStore.state.token) {
-            return null;
-          }
-
           console.error(`Failed to load results for poll ${poll.id}:`, error);
           return null;
         }
       }),
     );
-
-    if (!userStore.state.token) {
-      pollsListEl.innerHTML = "";
-      return;
-    }
 
     const pollsWithMeta = results
       .filter(Boolean)
@@ -364,11 +426,16 @@ async function loadPolls(force = false) {
           ownerUsername:
             basePoll?.owner_username ??
             basePoll?.ownerUsername ??
-            "Unknown",
+            "Guest",
           createdBy:
             basePoll?.owner_id ??
             basePoll?.createdBy ??
             result.poll.createdBy,
+          isPublic:
+            basePoll?.is_public ??
+            basePoll?.isPublic ??
+            result.poll.isPublic ??
+            false,
         };
       });
 
@@ -381,11 +448,6 @@ async function loadPolls(force = false) {
     bindVoteButtons();
     bindDeletePollButtons();
   } catch (error) {
-    if (error?.status === 401 || !userStore.state.token) {
-      pollsListEl.innerHTML = "";
-      return;
-    }
-
     pollsListEl.innerHTML = `<p class="subtitle">${escapeHtml(
       error.message || "Failed to load polls.",
     )}</p>`;
@@ -416,8 +478,8 @@ function bindLoginForm() {
 
     try {
       await userStore.login({ username, password });
-      showAppView("polls");
-      await loadPolls(true);
+      closeAccountMenu();
+      showAppView("home");
       loginForm.reset();
     } catch (error) {
       showMessage(loginErrorEl, error.message || "Failed to log in.");
@@ -454,7 +516,6 @@ function bindSignupForm() {
       });
 
       showMessage(signupErrorEl, "");
-
       activateAuthTab("login");
       form?.reset();
     } catch (error) {
@@ -541,7 +602,11 @@ function bindCreatePollForm() {
       await request("/api/v1/polls", {
         method: "POST",
         token,
-        body: { title, options },
+        body: {
+          title,
+          options,
+          guestId: getGuestId(),
+        },
       });
 
       createPollForm.reset();
@@ -571,6 +636,7 @@ async function init() {
   applyTranslations();
   activateAuthTab("login");
   bindAuthTabs();
+  bindAccountMenu();
   bindNav();
   bindLoginForm();
   bindSignupForm();
@@ -582,20 +648,13 @@ async function init() {
 
   renderCurrentUserInHeader();
   updateView();
-
-  if (userStore.state.token) {
-    await loadPolls(true);
-  }
+  showAppView("home");
 }
 
 userStore.addEventListener("change", () => {
   renderCurrentUserInHeader();
   updateView();
   renderProfileInfo();
-
-  if (!userStore.state.token && pollsListEl) {
-    pollsListEl.innerHTML = "";
-  }
 });
 
 init();
