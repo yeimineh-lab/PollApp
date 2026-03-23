@@ -5,7 +5,10 @@ import {
   getPollById,
   deletePollById,
 } from "../storage/polls.pgStore.mjs";
-import { getVoteByPollAndUser } from "../storage/votes.pgStore.mjs";
+import {
+  getVoteByPollAndUser,
+  getVoteByPollAndGuest,
+} from "../storage/votes.pgStore.mjs";
 import {
   ValidationError,
   NotFoundError,
@@ -15,6 +18,11 @@ import { pool } from "../storage/db.mjs";
 
 function normalizeTitle(t) {
   return String(t ?? "").trim();
+}
+
+function normalizeGuestUsername(value) {
+  const username = String(value ?? "").trim();
+  return username || "Guest";
 }
 
 function normalizeOptions(options) {
@@ -37,7 +45,10 @@ export async function listPolls({ userId = null } = {}) {
 export async function createPoll({ body, userId = null, guestId = null }) {
   const title = normalizeTitle(body?.title);
   const normalizedOptions = normalizeOptions(body?.options);
-  const isPublic = true;
+  const isPublic = Boolean(body?.isPublic);
+  const guestUsername = !userId
+    ? normalizeGuestUsername(body?.guestUsername)
+    : null;
 
   if (!title || title.length < 3) {
     throw new ValidationError("Poll title must be at least 3 characters.");
@@ -53,6 +64,8 @@ export async function createPoll({ body, userId = null, guestId = null }) {
 
   const poll = await insertPoll({
     ownerId: userId,
+    guestId: userId ? null : guestId,
+    guestUsername,
     title,
     description: normalizedOptions.join(" | "),
     isPublic,
@@ -62,20 +75,19 @@ export async function createPoll({ body, userId = null, guestId = null }) {
     poll: {
       ...poll,
       guestId: userId ? null : guestId,
+      guestUsername,
     },
   };
 }
 
-export async function getPollResults({ pollId, userId = null }) {
+export async function getPollResults({ pollId, userId = null, guestId = null }) {
   const poll = await getPollById(pollId);
 
   if (!poll) {
     throw new NotFoundError("Poll not found");
   }
 
-  const canAccess =
-    Boolean(poll.is_public) ||
-    (userId && poll.owner_id && String(poll.owner_id) === String(userId));
+  const canAccess = Boolean(poll.is_public) || Boolean(userId);
 
   if (!canAccess) {
     throw new ForbiddenError("You do not have access to this poll.");
@@ -102,7 +114,9 @@ export async function getPollResults({ pollId, userId = null }) {
 
   const existingVote = userId
     ? await getVoteByPollAndUser(pollId, userId)
-    : null;
+    : guestId
+      ? await getVoteByPollAndGuest(pollId, guestId)
+      : null;
 
   return {
     poll: {
@@ -110,7 +124,9 @@ export async function getPollResults({ pollId, userId = null }) {
       title: poll.title,
       isPublic: Boolean(poll.is_public),
       createdBy: poll.owner_id,
-      ownerUsername: poll.owner_username ?? "Guest",
+      guestId: poll.guest_id,
+      guestUsername: poll.guest_username,
+      ownerUsername: poll.owner_username ?? poll.guest_username ?? "Guest",
       userVote: existingVote ? Number(existingVote.option_index) : null,
       options: options.map((text, index) => ({
         optionIndex: index,
@@ -121,14 +137,20 @@ export async function getPollResults({ pollId, userId = null }) {
   };
 }
 
-export async function deletePoll({ pollId, userId }) {
+export async function deletePoll({ pollId, userId = null, guestId = null }) {
   const poll = await getPollById(pollId);
 
   if (!poll) {
     throw new NotFoundError("Poll not found");
   }
 
-  if (!poll.owner_id || String(poll.owner_id) !== String(userId)) {
+  const isUserOwner =
+    userId && poll.owner_id && String(poll.owner_id) === String(userId);
+
+  const isGuestOwner =
+    guestId && poll.guest_id && String(poll.guest_id) === String(guestId);
+
+  if (!isUserOwner && !isGuestOwner) {
     throw new ValidationError("You can only delete your own polls.");
   }
 
@@ -138,6 +160,7 @@ export async function deletePoll({ pollId, userId }) {
     id: poll.id,
     title: poll.title,
     createdBy: poll.owner_id,
-    ownerUsername: poll.owner_username ?? "Guest",
+    guestId: poll.guest_id,
+    ownerUsername: poll.owner_username ?? poll.guest_username ?? "Guest",
   };
 }

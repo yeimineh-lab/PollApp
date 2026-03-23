@@ -30,9 +30,17 @@ const pollsView = $("#pollsView");
 const createPollView = $("#createPollView");
 const profileView = $("#profileView");
 
+const pollsHeadingEl = $("#pollsHeading");
+const pollsSubtitleEl = $("#pollsSubtitle");
 const pollsListEl = $("#pollsList");
+
 const createPollForm = $("#createPollForm");
 const createPollMessageEl = $("#createPollMessage");
+const createPollSubtitleEl = $("#createPollSubtitle");
+const pollVisibilityFieldEl = $("#pollVisibility");
+const pollVisibilityFieldWrapEl = $("#pollVisibilityField");
+const guestUsernameFieldEl = $("#guestUsernameField");
+
 const logoutBtn = $("#logoutBtn");
 
 const loginForm = $("#loginForm");
@@ -44,6 +52,7 @@ const profileCurrentUsernameEl = $("#profileCurrentUsername");
 
 const currentLang = detectLanguage();
 let currentAppView = "home";
+let currentPollCategory = "public";
 let pollsLoading = false;
 
 function getGuestId() {
@@ -121,19 +130,101 @@ function closeAccountMenu() {
   accountMenuBtn?.setAttribute("aria-expanded", "false");
 }
 
-function showAppView(viewName) {
-  currentAppView = viewName;
+function syncPollHeadings() {
+  if (pollsHeadingEl) {
+    pollsHeadingEl.textContent =
+      currentPollCategory === "public" ? "Public polls" : "Community polls";
+  }
 
+  if (pollsSubtitleEl) {
+    pollsSubtitleEl.textContent =
+      currentPollCategory === "public"
+        ? "Public polls are visible to everyone. You can also create a guest poll without logging in."
+        : "Community polls are visible only to signed-in users.";
+  }
+}
+
+function syncCreatePollVisibility() {
   const isLoggedIn = Boolean(userStore.state.token);
 
+  if (!pollVisibilityFieldEl) return;
+
+  if (!isLoggedIn) {
+    if (pollVisibilityFieldWrapEl) {
+      pollVisibilityFieldWrapEl.classList.add("hidden");
+    }
+
+    if (guestUsernameFieldEl) {
+      guestUsernameFieldEl.classList.remove("hidden");
+    }
+
+    pollVisibilityFieldEl.innerHTML = `
+      <option value="true">Public Poll</option>
+    `;
+    pollVisibilityFieldEl.value = "true";
+
+    if (createPollSubtitleEl) {
+      createPollSubtitleEl.textContent =
+        "Create a public poll that other guests and users can vote on anonymously.";
+    }
+
+    return;
+  }
+
+  if (pollVisibilityFieldWrapEl) {
+    pollVisibilityFieldWrapEl.classList.remove("hidden");
+  }
+
+  if (guestUsernameFieldEl) {
+    guestUsernameFieldEl.classList.add("hidden");
+  }
+
+  pollVisibilityFieldEl.innerHTML = `
+    <option value="true">Public Poll</option>
+    <option value="false">Community Poll</option>
+  `;
+
+  if (!pollVisibilityFieldEl.value) {
+    pollVisibilityFieldEl.value = "true";
+  }
+
+  if (createPollSubtitleEl) {
+    createPollSubtitleEl.textContent =
+      "Create a public poll for everyone or a community poll for signed-in users.";
+  }
+}
+
+function showAppView(viewName) {
+  const isLoggedIn = Boolean(userStore.state.token);
+
+  if (viewName === "community-polls" && !isLoggedIn) {
+    viewName = "home";
+  }
+
+  currentAppView = viewName;
+
+  if (viewName === "public-polls") {
+    currentPollCategory = "public";
+  }
+
+  if (viewName === "community-polls") {
+    currentPollCategory = "community";
+  }
+
   homeView?.classList.toggle("hidden", viewName !== "home");
-  pollsView?.classList.toggle("hidden", viewName !== "polls");
+  pollsView?.classList.toggle(
+    "hidden",
+    viewName !== "public-polls" && viewName !== "community-polls",
+  );
   createPollView?.classList.toggle("hidden", viewName !== "create");
   profileView?.classList.toggle("hidden", !isLoggedIn || viewName !== "profile");
 
   $$(".nav-btn[data-view]").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === viewName);
   });
+
+  syncPollHeadings();
+  syncCreatePollVisibility();
 
   if (viewName === "profile" && isLoggedIn) {
     renderProfileInfo();
@@ -175,7 +266,7 @@ function bindNav() {
       const viewName = button.dataset.view;
       showAppView(viewName);
 
-      if (viewName === "polls") {
+      if (viewName === "public-polls" || viewName === "community-polls") {
         await loadPolls(true);
       }
     });
@@ -201,7 +292,7 @@ function updateView() {
   if (token) {
     if (pageHintEl) {
       pageHintEl.textContent =
-        "Welcome to Simple Poll. Browse public polls, create guest polls, or manage your account-only polls and profile.";
+        "Welcome to Simple Poll. Browse public polls, explore community polls, or manage your profile.";
     }
 
     if (accountMenuBtn) {
@@ -215,6 +306,11 @@ function updateView() {
       accountMenuUsername.textContent = me?.username ?? "User";
     }
 
+    $$(".nav-btn[data-auth-only='true']").forEach((button) => {
+      button.classList.remove("hidden");
+    });
+
+    syncCreatePollVisibility();
     showAppView(currentAppView);
     renderProfileInfo();
     return;
@@ -222,7 +318,7 @@ function updateView() {
 
   if (pageHintEl) {
     pageHintEl.textContent =
-      "Welcome to Simple Poll. Browse public polls, create guest polls, or sign in to manage your account and create account-only polls.";
+      "Welcome to Simple Poll. Browse public polls, create guest polls, or sign in to access community polls and your account.";
   }
 
   if (accountMenuBtn) {
@@ -232,9 +328,14 @@ function updateView() {
   guestMenu?.classList.remove("hidden");
   userMenu?.classList.add("hidden");
 
-  activateAuthTab("login");
+  $$(".nav-btn[data-auth-only='true']").forEach((button) => {
+    button.classList.add("hidden");
+  });
 
-  if (currentAppView === "profile") {
+  activateAuthTab("login");
+  syncCreatePollVisibility();
+
+  if (currentAppView === "profile" || currentAppView === "community-polls") {
     showAppView("home");
   } else {
     showAppView(currentAppView);
@@ -255,12 +356,31 @@ function renderPollCard(poll) {
     poll.user_id ??
     null;
 
+  const guestOwnerId =
+    poll.guestId ??
+    poll.guest_id ??
+    null;
+
   const myId = me?.id ?? me?.userId ?? null;
-  const isOwner = Boolean(ownerId && myId && String(ownerId) === String(myId));
+  const myGuestId = !me ? getGuestId() : null;
+
+  const isUserOwner = Boolean(ownerId && myId && String(ownerId) === String(myId));
+  const isGuestOwner = Boolean(
+    guestOwnerId &&
+    myGuestId &&
+    String(guestOwnerId) === String(myGuestId),
+  );
+  const isOwner = isUserOwner || isGuestOwner;
   const canDelete = isOwner;
+
   const userVote = poll.userVote;
-  const guestHasVoted = localStorage.getItem(`voted_poll_${poll.id}`) === "true";
-  const hasVoted = (userVote !== null && userVote !== undefined) || guestHasVoted;
+  const isLoggedIn = Boolean(me);
+  const guestHasVoted =
+    !isLoggedIn && localStorage.getItem(`voted_poll_${poll.id}`) === "true";
+
+  const hasVoted = isLoggedIn
+    ? userVote !== null && userVote !== undefined
+    : guestHasVoted;
 
   const optionsHtml = (poll.options ?? [])
     .map((option) => {
@@ -308,9 +428,9 @@ function renderPollCard(poll) {
       <div class="poll-card-head">
         <div>
           <h3>${escapeHtml(poll.title)}</h3>
-          <div class="poll-meta">Created by ${escapeHtml(poll.ownerUsername ?? "Guest")}</div>
+          <div class="poll-meta">Created by ${escapeHtml(poll.ownerUsername ?? poll.guestUsername ?? "Guest")}</div>
           <div class="poll-meta">
-            ${poll.isPublic ? "Public poll" : "Private poll"} · Total votes: ${totalVotes}
+            ${poll.isPublic ? "Public poll" : "Community poll"} · Total votes: ${totalVotes}
           </div>
         </div>
 
@@ -355,7 +475,10 @@ function bindVoteButtons() {
           },
         });
 
-        localStorage.setItem(`voted_poll_${pollId}`, "true");
+        if (!token || !me) {
+          localStorage.setItem(`voted_poll_${pollId}`, "true");
+        }
+
         await loadPolls(true);
       } catch (error) {
         alert(error.message || "Failed to vote.");
@@ -374,11 +497,15 @@ function bindDeletePollButtons() {
       if (!confirmed) return;
 
       try {
-        await request(`/api/v1/polls/${pollId}`, {
+        const guestId = !token ? getGuestId() : null;
+        const query = guestId ? `?guestId=${encodeURIComponent(guestId)}` : "";
+
+        await request(`/api/v1/polls/${pollId}${query}`, {
           method: "DELETE",
           token,
         });
 
+        localStorage.removeItem(`voted_poll_${pollId}`);
         await loadPolls(true);
       } catch (error) {
         alert(error.message || "Failed to delete poll.");
@@ -400,14 +527,19 @@ async function loadPolls(force = false) {
 
     if (!Array.isArray(polls) || polls.length === 0) {
       pollsListEl.innerHTML = `<p class="subtitle">No polls yet.</p>`;
+      syncPollHeadings();
       return;
     }
 
     const results = await Promise.all(
       polls.map(async (poll) => {
         try {
-          return await request(`/api/v1/polls/${poll.id}/results`, {
-            token: userStore.state.token,
+          const requestToken = userStore.state.token;
+          const guestId = !requestToken ? getGuestId() : null;
+          const query = guestId ? `?guestId=${encodeURIComponent(guestId)}` : "";
+
+          return await request(`/api/v1/polls/${poll.id}/results${query}`, {
+            token: requestToken,
           });
         } catch (error) {
           console.error(`Failed to load results for poll ${poll.id}:`, error);
@@ -426,11 +558,25 @@ async function loadPolls(force = false) {
           ownerUsername:
             basePoll?.owner_username ??
             basePoll?.ownerUsername ??
+            basePoll?.guest_username ??
+            basePoll?.guestUsername ??
+            result.poll.ownerUsername ??
+            result.poll.guestUsername ??
             "Guest",
           createdBy:
             basePoll?.owner_id ??
             basePoll?.createdBy ??
             result.poll.createdBy,
+          guestId:
+            basePoll?.guest_id ??
+            basePoll?.guestId ??
+            result.poll.guestId ??
+            null,
+          guestUsername:
+            basePoll?.guest_username ??
+            basePoll?.guestUsername ??
+            result.poll.guestUsername ??
+            "Guest",
           isPublic:
             basePoll?.is_public ??
             basePoll?.isPublic ??
@@ -439,12 +585,22 @@ async function loadPolls(force = false) {
         };
       });
 
-    if (pollsWithMeta.length === 0) {
+    const filteredPolls = pollsWithMeta.filter((poll) => {
+      if (currentPollCategory === "public") {
+        return Boolean(poll.isPublic);
+      }
+
+      return !Boolean(poll.isPublic);
+    });
+
+    syncPollHeadings();
+
+    if (filteredPolls.length === 0) {
       pollsListEl.innerHTML = `<p class="subtitle">No polls available right now.</p>`;
       return;
     }
 
-    pollsListEl.innerHTML = pollsWithMeta.map(renderPollCard).join("");
+    pollsListEl.innerHTML = filteredPolls.map(renderPollCard).join("");
     bindVoteButtons();
     bindDeletePollButtons();
   } catch (error) {
@@ -577,6 +733,7 @@ function bindCreatePollForm() {
     const formData = new FormData(createPollForm);
 
     const title = String(formData.get("title") ?? "").trim();
+    const guestUsername = String(formData.get("guestUsername") ?? "").trim();
     const options = [
       formData.get("option1"),
       formData.get("option2"),
@@ -586,6 +743,8 @@ function bindCreatePollForm() {
       .map((value) => String(value ?? "").trim())
       .filter(Boolean);
 
+    const isPublic = String(formData.get("isPublic") ?? "true") === "true";
+
     if (!title) {
       showMessage(createPollMessageEl, "Title is required.");
       return;
@@ -593,6 +752,11 @@ function bindCreatePollForm() {
 
     if (options.length < 2) {
       showMessage(createPollMessageEl, "At least two options are required.");
+      return;
+    }
+
+    if (!token && guestUsername.length === 0) {
+      showMessage(createPollMessageEl, "Guest username is required.");
       return;
     }
 
@@ -605,13 +769,22 @@ function bindCreatePollForm() {
         body: {
           title,
           options,
+          isPublic,
           guestId: getGuestId(),
+          guestUsername,
         },
       });
 
       createPollForm.reset();
+      syncCreatePollVisibility();
       showMessage(createPollMessageEl, "Poll created successfully.");
-      showAppView("polls");
+
+      if (isPublic) {
+        showAppView("public-polls");
+      } else {
+        showAppView("community-polls");
+      }
+
       await loadPolls(true);
     } catch (error) {
       showMessage(createPollMessageEl, error.message || "Failed to create poll.");

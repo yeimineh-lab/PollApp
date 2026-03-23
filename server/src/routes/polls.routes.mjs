@@ -1,5 +1,4 @@
 import express from "express";
-import { requireAuth } from "../middleware/requireAuth.mjs";
 import { optionalAuth } from "../middleware/optionalAuth.mjs";
 import * as pollsService from "../services/polls.service.mjs";
 
@@ -24,6 +23,7 @@ router.get("/polls/:id/results", optionalAuth(), async (req, res, next) => {
     const result = await pollsService.getPollResults({
       pollId: req.params.id,
       userId: req.auth?.userId ?? null,
+      guestId: req.query.guestId ? String(req.query.guestId) : null,
     });
 
     res.json(result);
@@ -48,11 +48,12 @@ router.post("/polls", optionalAuth(), async (req, res, next) => {
 });
 
 // DELETE /api/v1/polls/:id
-router.delete("/polls/:id", requireAuth(), async (req, res, next) => {
+router.delete("/polls/:id", optionalAuth(), async (req, res, next) => {
   try {
     const result = await pollsService.deletePoll({
       pollId: req.params.id,
-      userId: req.auth.userId,
+      userId: req.auth?.userId ?? null,
+      guestId: req.query.guestId ? String(req.query.guestId) : null,
     });
 
     res.json({ ok: true, poll: result });

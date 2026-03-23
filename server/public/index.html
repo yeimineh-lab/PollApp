@@ -23,7 +23,7 @@
           <div class="brand-wrap">
             <h1 id="brandTitle">Simple Poll</h1>
             <p id="pageHint" class="page-hint">
-              Welcome to Simple Poll. Browse public polls, create guest polls, or sign in to manage your account and create account-only polls.
+              Welcome to Simple Poll. Browse public polls, create guest polls, or sign in to access community polls and your account.
             </p>
           </div>
 
@@ -167,10 +167,18 @@
           </button>
           <button
             class="nav-btn"
-            data-view="polls"
+            data-view="public-polls"
             type="button"
           >
             Public Polls
+          </button>
+          <button
+            class="nav-btn hidden"
+            data-view="community-polls"
+            data-auth-only="true"
+            type="button"
+          >
+            Community Polls
           </button>
           <button
             class="nav-btn"
@@ -198,7 +206,7 @@
                     <h3>How the app works</h3>
                     <p>
                       You can use Simple Poll as a guest or with an account. Guests can create public polls and vote on public polls.
-                      If you create an account, you can also manage your profile and access account-only polls.
+                      If you create an account, you can also access community polls and manage your profile.
                     </p>
                   </section>
 
@@ -211,10 +219,17 @@
                   </section>
 
                   <section class="home-info-block">
+                    <h3>Community polls</h3>
+                    <p>
+                      Community polls are available to signed-in users only. Guests cannot see or vote on these polls.
+                    </p>
+                  </section>
+
+                  <section class="home-info-block">
                     <h3>Creating polls</h3>
                     <p>
-                      You can create a guest poll without logging in. If you want more control and access to account-based features,
-                      create an account and sign in.
+                      You can create a guest poll without logging in. If you sign in, you can choose whether your poll should be public
+                      or community-only.
                     </p>
                   </section>
 
@@ -233,9 +248,9 @@
           <section id="pollsView" class="view-section hidden">
             <div class="grid">
               <section class="card col-12">
-                <h2>Available polls</h2>
+                <h2 id="pollsHeading">Public polls</h2>
 
-                <p class="subtitle">
+                <p id="pollsSubtitle" class="subtitle">
                   Public polls are visible to everyone. You can also create a guest poll without logging in.
                 </p>
 
@@ -249,11 +264,21 @@
               <section class="card col-12">
                 <h2>Create a poll</h2>
 
-                <p class="subtitle">
+                <p id="createPollSubtitle" class="subtitle">
                   Create a public poll that other guests and users can vote on anonymously.
                 </p>
 
                 <form id="createPollForm" class="panel">
+                  <div id="guestUsernameField" class="field">
+                    <label for="guestUsername">Guest username</label>
+                    <input
+                      id="guestUsername"
+                      name="guestUsername"
+                      type="text"
+                      placeholder="Enter a guest name"
+                    />
+                  </div>
+
                   <div class="field">
                     <label for="pollTitle">Title</label>
                     <input
@@ -303,6 +328,14 @@
                         type="text"
                       />
                     </div>
+                  </div>
+
+                  <div id="pollVisibilityField" class="field">
+                    <label for="pollVisibility">Poll visibility</label>
+                    <select id="pollVisibility" name="isPublic">
+                      <option value="true">Public Poll</option>
+                      <option value="false">Community Poll</option>
+                    </select>
                   </div>
 
                   <div class="row">

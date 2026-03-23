@@ -5,6 +5,8 @@ export async function getPollById(id) {
     `SELECT
         p.id,
         p.owner_id,
+        p.guest_id,
+        p.guest_username,
         p.title,
         p.description,
         p.created_at,
@@ -20,16 +22,26 @@ export async function getPollById(id) {
 }
 
 export async function insertPoll({
-  ownerId,
+  ownerId = null,
+  guestId = null,
+  guestUsername = null,
   title,
   description = "",
   isPublic = false,
 }) {
   const result = await pool.query(
-    `INSERT INTO polls (owner_id, title, description, is_public)
-     VALUES ($1, $2, $3, $4)
-     RETURNING id, owner_id, title, description, is_public, created_at`,
-    [ownerId, title, description, isPublic],
+    `INSERT INTO polls (owner_id, guest_id, guest_username, title, description, is_public)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING
+       id,
+       owner_id,
+       guest_id,
+       guest_username,
+       title,
+       description,
+       is_public,
+       created_at`,
+    [ownerId, guestId, guestUsername, title, description, isPublic],
   );
 
   return result.rows[0];
@@ -40,6 +52,8 @@ export async function listPollRows() {
     `SELECT
         p.id,
         p.owner_id,
+        p.guest_id,
+        p.guest_username,
         p.title,
         p.description,
         p.created_at,
@@ -59,6 +73,8 @@ export async function listVisiblePollRows({ userId = null } = {}) {
       `SELECT
           p.id,
           p.owner_id,
+          p.guest_id,
+          p.guest_username,
           p.title,
           p.description,
           p.created_at,
@@ -77,6 +93,8 @@ export async function listVisiblePollRows({ userId = null } = {}) {
     `SELECT
         p.id,
         p.owner_id,
+        p.guest_id,
+        p.guest_username,
         p.title,
         p.description,
         p.created_at,
@@ -84,10 +102,7 @@ export async function listVisiblePollRows({ userId = null } = {}) {
         u.username AS owner_username
      FROM polls p
      LEFT JOIN users u ON u.id = p.owner_id
-     WHERE p.is_public = true
-        OR p.owner_id = $1
      ORDER BY p.created_at DESC`,
-    [userId],
   );
 
   return result.rows;
