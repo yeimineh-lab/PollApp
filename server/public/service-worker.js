@@ -1,47 +1,42 @@
-const CACHE_NAME = "poll-app-static-v2";
+const CACHE_NAME = "poll-app-static-v3";
 
-/*
-Files that should be available offline.
-This is called the "app shell".
-*/
-const ASSETS_TO_CACHE = [
+const APP_SHELL_FILES = [
   "/",
   "/index.html",
   "/app.css",
   "/app.mjs",
+];
+
+const STATIC_ASSETS = [
   "/offline.html",
   "/manifest.webmanifest",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
 
-/*
-Check if request is a static file (not API)
-*/
-function isStaticAsset(requestUrl) {
-  const url = new URL(requestUrl);
+function isStaticAsset(pathname) {
+  return STATIC_ASSETS.includes(pathname);
+}
 
-  if (url.origin !== self.location.origin) return false;
-  if (url.pathname.startsWith("/api/")) return false;
-
-  return ASSETS_TO_CACHE.includes(url.pathname);
+function isAppShell(pathname) {
+  return APP_SHELL_FILES.includes(pathname);
 }
 
 /*
-INSTALL:
-Cache important static files
+INSTALL
 */
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll([...APP_SHELL_FILES, ...STATIC_ASSETS])
+    )
   );
 
   self.skipWaiting();
 });
 
 /*
-ACTIVATE:
-Delete old caches and take control
+ACTIVATE
 */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
@@ -60,41 +55,51 @@ self.addEventListener("activate", (event) => {
 });
 
 /*
-FETCH:
-Handle requests
+ALLOW FORCE UPDATE FROM CLIENT
+*/
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
+/*
+FETCH
 */
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
-  // Only handle GET requests
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
 
-  /*
-  Never cache API calls
-  Always go to network
-  */
-  if (url.pathname.startsWith("/api/")) {
-    return;
-  }
+  if (url.origin !== self.location.origin) return;
+
+  // aldri cache API
+  if (url.pathname.startsWith("/api/")) return;
 
   /*
-  Page navigation:
-  Try network first
-  If offline → show offline page
+  APP SHELL + NAVIGATION
+  -> network first (gir fresh side)
   */
-  if (request.mode === "navigate") {
+  if (request.mode === "navigate" || isAppShell(url.pathname)) {
     event.respondWith(
       (async () => {
         try {
-          return await fetch(request);
+          const fresh = await fetch(request);
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(request, fresh.clone());
+          return fresh;
         } catch {
+          const cached = await caches.match(request);
           const offline = await caches.match("/offline.html");
+
           return (
+            cached ||
             offline ||
             new Response("Offline", {
-              status: 503
+              status: 503,
+              statusText: "Offline",
             })
           );
         }
@@ -104,20 +109,25 @@ self.addEventListener("fetch", (event) => {
   }
 
   /*
-  Static files:
-  Cache first strategy
+  STATIC FILES
+  -> cache first
   */
-  if (isStaticAsset(request.url)) {
+  if (isStaticAsset(url.pathname)) {
     event.respondWith(
       (async () => {
         const cached = await caches.match(request);
         if (cached) return cached;
 
-        const response = await fetch(request);
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, response.clone());
-
-        return response;
+        try {
+          const response = await fetch(request);
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(request, response.clone());
+          return response;
+        } catch {
+          return new Response("Offline", {
+            status: 503,
+          });
+        }
       })()
     );
   }

@@ -146,5 +146,4 @@ Handles:
 
 ---
 
-## Git (Push to GitHub)
 

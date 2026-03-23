@@ -37,7 +37,22 @@ app.use((req, res, next) => {
 app.use(requireJson);
 
 // Serve static frontend files
-app.use(express.static(PUBLIC_DIR));
+app.use(
+  express.static(PUBLIC_DIR, {
+    setHeaders: (res, filePath) => {
+      if (
+        filePath.endsWith(".html") ||
+        filePath.endsWith(".mjs") ||
+        filePath.endsWith(".js") ||
+        filePath.endsWith(".css")
+      ) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+      }
+    },
+  })
+);
 
 // Health check
 app.get("/health", (req, res) => {
