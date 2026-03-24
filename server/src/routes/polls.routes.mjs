@@ -41,12 +41,9 @@ router.get("/polls/:id/results", optionalAuth(), async (req, res, next) => {
 router.post("/polls", optionalAuth(), async (req, res, next) => {
   try {
     const result = await pollsService.createPoll({
+      body: req.body,
       userId: req.auth?.userId,
       guestId: req.body.guestId,
-      guestUsername: req.body.guestUsername,
-      title: req.body.title,
-      options: req.body.options,
-      isPublic: req.body.isPublic,
     });
     res.status(201).json(result);
   } catch (err) {
