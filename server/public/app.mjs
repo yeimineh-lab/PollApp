@@ -2,10 +2,6 @@
 import { request } from "./data/api.mjs";
 import { t, detectLanguage } from "./i18n/index.mjs";
 
-import "./ui/user-create.mjs";
-import "./ui/user-edit.mjs";
-import "./ui/user-delete.mjs";
-
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
@@ -54,6 +50,48 @@ const currentLang = detectLanguage();
 let currentAppView = "home";
 let currentPollCategory = "public";
 let pollsLoading = false;
+
+let userCreateModulePromise = null;
+let userProfileModulesPromise = null;
+
+function ensureUserCreateComponent() {
+  if (customElements.get("user-create")) {
+    return Promise.resolve();
+  }
+
+  if (!userCreateModulePromise) {
+    userCreateModulePromise = import("./ui/user-create.mjs");
+  }
+
+  return userCreateModulePromise;
+}
+
+function ensureUserProfileComponents() {
+  const hasEdit = customElements.get("user-edit");
+  const hasDelete = customElements.get("user-delete");
+
+  if (hasEdit && hasDelete) {
+    return Promise.resolve();
+  }
+
+  if (!userProfileModulesPromise) {
+    userProfileModulesPromise = Promise.all([
+      import("./ui/user-edit.mjs"),
+      import("./ui/user-delete.mjs"),
+    ]);
+  }
+
+  return userProfileModulesPromise;
+}
+
+function runWhenIdle(callback, timeout = 1500) {
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(callback, { timeout });
+    return;
+  }
+
+  window.setTimeout(callback, 250);
+}
 
 function getGuestId() {
   const storageKey = "simple_poll_guest_id";
@@ -122,7 +160,16 @@ function activateAuthTab(tab) {
 
 function bindAuthTabs() {
   showLoginBtn?.addEventListener("click", () => activateAuthTab("login"));
-  showSignupBtn?.addEventListener("click", () => activateAuthTab("signup"));
+
+  showSignupBtn?.addEventListener("click", async () => {
+    try {
+      await ensureUserCreateComponent();
+      activateAuthTab("signup");
+    } catch (error) {
+      console.error("Failed to load signup component:", error);
+      activateAuthTab("signup");
+    }
+  });
 }
 
 function closeAccountMenu() {
@@ -253,8 +300,18 @@ function bindAccountMenu() {
   });
 
   document.querySelectorAll(".account-link-btn[data-view]").forEach((button) => {
-    button.addEventListener("click", () => {
-      showAppView(button.dataset.view);
+    button.addEventListener("click", async () => {
+      const viewName = button.dataset.view;
+
+      if (viewName === "profile") {
+        try {
+          await ensureUserProfileComponents();
+        } catch (error) {
+          console.error("Failed to load profile components:", error);
+        }
+      }
+
+      showAppView(viewName);
       closeAccountMenu();
     });
   });
@@ -795,13 +852,17 @@ function bindCreatePollForm() {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
 
-  window.addEventListener("load", async () => {
-    try {
-      const registration = await navigator.serviceWorker.register("/service-worker.js", {
-        updateViaCache: "none",
-      });
+  let refreshing = false;
 
-      console.log("Service worker registered:", registration);
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+
+  const register = async () => {
+    try {
+      const registration = await navigator.serviceWorker.register("/service-worker.js");
 
       if (registration.waiting) {
         registration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -820,21 +881,15 @@ function registerServiceWorker() {
           }
         });
       });
-
-      if (typeof registration.update === "function") {
-        registration.update().catch(() => {});
-      }
     } catch (error) {
       console.error("Service worker registration failed:", error);
     }
-  });
+  };
 
-  let refreshing = false;
-
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing) return;
-    refreshing = true;
-    window.location.reload();
+  window.addEventListener("load", () => {
+    runWhenIdle(() => {
+      register().catch(() => {});
+    }, 2000);
   });
 }
 
