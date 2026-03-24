@@ -1,6 +1,13 @@
+/**
+ * Poll routes.
+ *
+ * Handles listing polls, creating polls,
+ * retrieving poll results, and deleting polls.
+ */
+
 import express from "express";
-import { optionalAuth } from "../middleware/optionalAuth.mjs";
 import * as pollsService from "../services/polls.service.mjs";
+import optionalAuth from "../middleware/optionalAuth.mjs";
 
 const router = express.Router();
 
@@ -8,12 +15,11 @@ const router = express.Router();
 router.get("/polls", optionalAuth(), async (req, res, next) => {
   try {
     const result = await pollsService.listPolls({
-      userId: req.auth?.userId ?? null,
+      userId: req.auth?.userId,
     });
-
     res.json(result);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -22,13 +28,12 @@ router.get("/polls/:id/results", optionalAuth(), async (req, res, next) => {
   try {
     const result = await pollsService.getPollResults({
       pollId: req.params.id,
-      userId: req.auth?.userId ?? null,
-      guestId: req.query.guestId ? String(req.query.guestId) : null,
+      userId: req.auth?.userId,
+      guestId: req.query.guestId,
     });
-
     res.json(result);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -36,14 +41,16 @@ router.get("/polls/:id/results", optionalAuth(), async (req, res, next) => {
 router.post("/polls", optionalAuth(), async (req, res, next) => {
   try {
     const result = await pollsService.createPoll({
-      body: req.body,
-      userId: req.auth?.userId ?? null,
-      guestId: req.body.guestId ? String(req.body.guestId) : null,
+      userId: req.auth?.userId,
+      guestId: req.body.guestId,
+      guestUsername: req.body.guestUsername,
+      title: req.body.title,
+      options: req.body.options,
+      isPublic: req.body.isPublic,
     });
-
     res.status(201).json(result);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -52,13 +59,12 @@ router.delete("/polls/:id", optionalAuth(), async (req, res, next) => {
   try {
     const result = await pollsService.deletePoll({
       pollId: req.params.id,
-      userId: req.auth?.userId ?? null,
-      guestId: req.query.guestId ? String(req.query.guestId) : null,
+      userId: req.auth?.userId,
+      guestId: req.query.guestId,
     });
-
-    res.json({ ok: true, poll: result });
-  } catch (error) {
-    next(error);
+    res.json(result);
+  } catch (err) {
+    next(err);
   }
 });
 

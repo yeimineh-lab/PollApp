@@ -1,3 +1,10 @@
+/**
+ * Database setup.
+ *
+ * Creates the PostgreSQL connection pool
+ * and initializes all required tables and indexes.
+ */
+
 import pg from "pg";
 
 const { Pool } = pg;

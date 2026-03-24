@@ -1,3 +1,11 @@
+/**
+ * Poll service.
+ *
+ * Handles listing polls, creating polls,
+ * retrieving poll results, and deleting polls.
+ * Supports both guests and authenticated users.
+ */
+
 import {
   insertPoll,
   listPollRows,

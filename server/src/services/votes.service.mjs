@@ -1,3 +1,11 @@
+/**
+ * Vote service.
+ *
+ * Handles voting on polls.
+ * Validates input, checks access rules,
+ * and ensures that a user or guest can only vote once per poll.
+ */
+
 import {
   ValidationError,
   NotFoundError,

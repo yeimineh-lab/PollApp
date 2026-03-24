@@ -1,3 +1,9 @@
+/**
+ * Authentication middleware.
+ *
+ * Ensures the request is authenticated.
+ */
+
 import { getSessionUserId } from "../services/sessions.service.mjs";
 import { getBearerToken } from "../utils/authUtils.mjs";
 

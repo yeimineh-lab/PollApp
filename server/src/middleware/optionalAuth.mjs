@@ -1,3 +1,9 @@
+/**
+ * Optional authentication middleware.
+ *
+ * Reads the bearer token and attaches user information if valid.
+ */
+
 import { getSessionUserId } from "../services/sessions.service.mjs";
 import { getBearerToken } from "../utils/authUtils.mjs";
 

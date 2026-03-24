@@ -1,3 +1,11 @@
+/**
+ * Authentication service.
+ *
+ * Handles user login, logout,
+ * and retrieving the current user.
+ * Creates and deletes session tokens.
+ */
+
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 

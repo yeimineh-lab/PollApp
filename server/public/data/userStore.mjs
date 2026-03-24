@@ -1,4 +1,12 @@
-﻿import { request } from "./api.mjs";
+﻿/**
+ * User store.
+ *
+ * Manages authentication state,
+ * stores the current user and token,
+ * and handles user-related API actions.
+ */
+
+import { request } from "./api.mjs";
 
 const TOKEN_KEY = "pollapp_token";
 
@@ -125,7 +133,7 @@ class UserStore extends EventTarget {
       const meFromLogin = data?.user ?? data?.me ?? null;
 
       if (!token) {
-        throw new Error("Login response mangler token.");
+        throw new Error("Login response is missing token.");
       }
 
       this.#saveToken(token);
@@ -212,7 +220,7 @@ class UserStore extends EventTarget {
 
   async updateMe(patch) {
     if (!this.state.token) {
-      throw new Error("Du må være logget inn for å redigere.");
+      throw new Error("You must be logged in to update your profile.");
     }
 
     this.#set({
@@ -248,7 +256,7 @@ class UserStore extends EventTarget {
 
   async deleteMe() {
     if (!this.state.token) {
-      throw new Error("Du må være logget inn for å slette konto.");
+      throw new Error("You must be logged in to delete your account.");
     }
 
     this.#set({

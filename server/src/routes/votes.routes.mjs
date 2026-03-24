@@ -1,9 +1,17 @@
+/**
+ * Vote routes.
+ *
+ * Handles voting on polls
+ * for guests and authenticated users.
+ */
+
 import express from "express";
 import { optionalAuth } from "../middleware/optionalAuth.mjs";
 import { voteOnPoll } from "../services/votes.service.mjs";
 
 const router = express.Router();
 
+// POST /api/v1/polls/:id/vote
 router.post("/polls/:id/vote", optionalAuth(), async (req, res, next) => {
   try {
     const pollId = Number(req.params.id);

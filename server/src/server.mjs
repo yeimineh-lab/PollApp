@@ -1,3 +1,11 @@
+/**
+ * Server entry point.
+ *
+ * Loads environment variables,
+ * initializes the database,
+ * and starts the HTTP server.
+ */
+
 import "dotenv/config";
 import app from "./app.mjs";
 import { initDb } from "./storage/db.mjs";

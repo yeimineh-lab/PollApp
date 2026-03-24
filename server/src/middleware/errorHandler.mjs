@@ -1,4 +1,10 @@
-﻿export default function errorHandler(err, req, res, _next) {
+﻿/**
+ * Error handler middleware.
+ *
+ * Formats errors and sends HTTP responses.
+ */
+
+export default function errorHandler(err, req, res, _next) {
   const status = err.status || 500;
 
   if (res.headersSent) {

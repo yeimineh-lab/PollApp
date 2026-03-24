@@ -1,8 +1,9 @@
 ﻿/**
- * Single fetch gateway - all requests go through here.
- * Relative URLs only.
+ * API request helper.
  *
- * IMPORTANT: This file contains the ONLY fetch() in the client.
+ * Sends requests to the backend API,
+ * adds headers and tokens,
+ * and handles responses and errors.
  */
 export async function request(path, { method = "GET", body, token } = {}) {
   const headers = { "Content-Type": "application/json" };

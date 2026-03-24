@@ -1,3 +1,9 @@
+/**
+ * Custom error classes.
+ *
+ * Defines application-specific errors with HTTP status codes.
+ */
+
 export class AppError extends Error {
   constructor(message, status = 500) {
     super(message);

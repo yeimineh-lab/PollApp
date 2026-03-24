@@ -1,3 +1,11 @@
+/**
+ * User service.
+ *
+ * Handles listing users, creating users,
+ * updating the current user, and deleting the current user.
+ * Validates input, hashes passwords, and stores consent data.
+ */
+
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 

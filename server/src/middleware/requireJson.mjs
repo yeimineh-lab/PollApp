@@ -1,3 +1,9 @@
+/**
+ * JSON validation middleware.
+ *
+ * Ensures requests use application/json when required.
+ */
+
 export default function requireJson(req, res, next) {
   const methodsRequiringJson = ["POST", "PUT", "PATCH"];
 

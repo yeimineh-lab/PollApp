@@ -1,4 +1,11 @@
-﻿import { userStore } from "./data/userStore.mjs";
+﻿/**
+ * Client application entry file.
+ *
+ * Handles UI setup, navigation, authentication flow,
+ * poll loading, poll actions, and service worker registration.
+ */
+
+import { userStore } from "./data/userStore.mjs";
 import { request } from "./data/api.mjs";
 import { t, detectLanguage } from "./i18n/index.mjs";
 
@@ -767,7 +774,6 @@ function bindLoginForm() {
   });
 }
 
-// 
 
 function bindSignupForm() {
   document.addEventListener("user-create-submit", async (event) => {
@@ -797,7 +803,7 @@ function bindSignupForm() {
         tosAccepted: consent,
       });
 
-      // ✅ FIX: vis melding i login-panelet
+    
       activateAuthTab("login");
       showMessage(
         loginErrorEl,

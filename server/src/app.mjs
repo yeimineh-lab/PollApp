@@ -1,4 +1,11 @@
-﻿import express from "express";
+﻿/**
+ * Express application setup.
+ *
+ * Configures middleware, routes, static files,
+ * language handling, and error handling.
+ */
+
+import express from "express";
 
 import pollsRoutes from "./routes/polls.routes.mjs";
 import usersRoutes from "./routes/users.routes.mjs";
