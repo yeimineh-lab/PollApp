@@ -54,6 +54,13 @@ let pollsLoading = false;
 let userCreateModulePromise = null;
 let userProfileModulesPromise = null;
 
+const POLLS_CACHE_TTL_MS = 30_000;
+let pollsCache = {
+  key: null,
+  fetchedAt: 0,
+  pollsWithMeta: null,
+};
+
 function ensureUserCreateComponent() {
   if (customElements.get("user-create")) {
     return Promise.resolve();
@@ -103,6 +110,25 @@ function getGuestId() {
   }
 
   return guestId;
+}
+
+function getPollCacheKey() {
+  const { token } = userStore.state;
+  return token ? `user:${token}` : `guest:${getGuestId()}`;
+}
+
+function invalidatePollsCache() {
+  pollsCache = {
+    key: null,
+    fetchedAt: 0,
+    pollsWithMeta: null,
+  };
+}
+
+function isPollsCacheValid() {
+  if (!Array.isArray(pollsCache.pollsWithMeta)) return false;
+  if (pollsCache.key !== getPollCacheKey()) return false;
+  return Date.now() - pollsCache.fetchedAt < POLLS_CACHE_TTL_MS;
 }
 
 function escapeHtml(value) {
@@ -244,6 +270,8 @@ function syncCreatePollVisibility() {
 function showAppView(viewName) {
   const isLoggedIn = Boolean(userStore.state.token);
 
+  showMessage(createPollMessageEl, "");
+
   if (viewName === "community-polls" && !isLoggedIn) {
     viewName = "home";
   }
@@ -324,7 +352,7 @@ function bindNav() {
       showAppView(viewName);
 
       if (viewName === "public-polls" || viewName === "community-polls") {
-        await loadPolls(true);
+        await loadPolls();
       }
     });
   });
@@ -332,6 +360,7 @@ function bindNav() {
   logoutBtn?.addEventListener("click", async () => {
     try {
       await userStore.logout();
+      invalidatePollsCache();
       closeAccountMenu();
       showAppView("home");
     } catch (error) {
@@ -345,6 +374,10 @@ function updateView() {
 
   appView?.classList.remove("hidden");
   mainNav?.classList.remove("hidden");
+
+  if (pollsCache.key && pollsCache.key !== getPollCacheKey()) {
+    invalidatePollsCache();
+  }
 
   if (token) {
     if (pageHintEl) {
@@ -513,6 +546,29 @@ function renderPollCard(poll) {
   `;
 }
 
+function renderPollsList(pollsWithMeta) {
+  if (!pollsListEl) return;
+
+  const filteredPolls = pollsWithMeta.filter((poll) => {
+    if (currentPollCategory === "public") {
+      return Boolean(poll.isPublic);
+    }
+
+    return !Boolean(poll.isPublic);
+  });
+
+  syncPollHeadings();
+
+  if (filteredPolls.length === 0) {
+    pollsListEl.innerHTML = `<p class="subtitle">No polls available right now.</p>`;
+    return;
+  }
+
+  pollsListEl.innerHTML = filteredPolls.map(renderPollCard).join("");
+  bindVoteButtons();
+  bindDeletePollButtons();
+}
+
 function bindVoteButtons() {
   $$(".vote-btn").forEach((button) => {
     button.addEventListener("click", async () => {
@@ -536,6 +592,7 @@ function bindVoteButtons() {
           localStorage.setItem(`voted_poll_${pollId}`, "true");
         }
 
+        invalidatePollsCache();
         await loadPolls(true);
       } catch (error) {
         alert(error.message || "Failed to vote.");
@@ -563,6 +620,7 @@ function bindDeletePollButtons() {
         });
 
         localStorage.removeItem(`voted_poll_${pollId}`);
+        invalidatePollsCache();
         await loadPolls(true);
       } catch (error) {
         alert(error.message || "Failed to delete poll.");
@@ -571,95 +629,103 @@ function bindDeletePollButtons() {
   });
 }
 
+async function fetchPollsWithMeta() {
+  const { token } = userStore.state;
+  const data = await request("/api/v1/polls", { token });
+  const polls = data?.polls ?? data ?? [];
+
+  if (!Array.isArray(polls) || polls.length === 0) {
+    return [];
+  }
+
+  const results = await Promise.all(
+    polls.map(async (poll) => {
+      try {
+        const requestToken = userStore.state.token;
+        const guestId = !requestToken ? getGuestId() : null;
+        const query = guestId ? `?guestId=${encodeURIComponent(guestId)}` : "";
+
+        return await request(`/api/v1/polls/${poll.id}/results${query}`, {
+          token: requestToken,
+        });
+      } catch (error) {
+        console.error(`Failed to load results for poll ${poll.id}:`, error);
+        return null;
+      }
+    }),
+  );
+
+  return results
+    .filter(Boolean)
+    .map((result) => {
+      const basePoll = polls.find((poll) => String(poll.id) === String(result.poll.id));
+
+      return {
+        ...result.poll,
+        ownerUsername:
+          basePoll?.owner_username ??
+          basePoll?.ownerUsername ??
+          basePoll?.guest_username ??
+          basePoll?.guestUsername ??
+          result.poll.ownerUsername ??
+          result.poll.guestUsername ??
+          "Guest",
+        createdBy:
+          basePoll?.owner_id ??
+          basePoll?.createdBy ??
+          result.poll.createdBy,
+        guestId:
+          basePoll?.guest_id ??
+          basePoll?.guestId ??
+          result.poll.guestId ??
+          null,
+        guestUsername:
+          basePoll?.guest_username ??
+          basePoll?.guestUsername ??
+          result.poll.guestUsername ??
+          "Guest",
+        isPublic:
+          basePoll?.is_public ??
+          basePoll?.isPublic ??
+          result.poll.isPublic ??
+          false,
+      };
+    });
+}
+
 async function loadPolls(force = false) {
   if (!pollsListEl) return;
   if (pollsLoading && !force) return;
 
-  const { token } = userStore.state;
+  const shouldUseCache = !force && isPollsCacheValid();
+
+  if (shouldUseCache) {
+    renderPollsList(pollsCache.pollsWithMeta);
+    return;
+  }
+
   pollsLoading = true;
 
   try {
-    const data = await request("/api/v1/polls", { token });
-    const polls = data?.polls ?? data ?? [];
+    if (!Array.isArray(pollsCache.pollsWithMeta) || force) {
+      pollsListEl.innerHTML = `<p class="subtitle">Loading polls...</p>`;
+    }
 
-    if (!Array.isArray(polls) || polls.length === 0) {
+    const pollsWithMeta = await fetchPollsWithMeta();
+
+    pollsCache = {
+      key: getPollCacheKey(),
+      fetchedAt: Date.now(),
+      pollsWithMeta,
+    };
+
+    if (pollsWithMeta.length === 0) {
       pollsListEl.innerHTML = `<p class="subtitle">No polls yet.</p>`;
       syncPollHeadings();
       return;
     }
 
-    const results = await Promise.all(
-      polls.map(async (poll) => {
-        try {
-          const requestToken = userStore.state.token;
-          const guestId = !requestToken ? getGuestId() : null;
-          const query = guestId ? `?guestId=${encodeURIComponent(guestId)}` : "";
-
-          return await request(`/api/v1/polls/${poll.id}/results${query}`, {
-            token: requestToken,
-          });
-        } catch (error) {
-          console.error(`Failed to load results for poll ${poll.id}:`, error);
-          return null;
-        }
-      }),
-    );
-
-    const pollsWithMeta = results
-      .filter(Boolean)
-      .map((result) => {
-        const basePoll = polls.find((poll) => String(poll.id) === String(result.poll.id));
-
-        return {
-          ...result.poll,
-          ownerUsername:
-            basePoll?.owner_username ??
-            basePoll?.ownerUsername ??
-            basePoll?.guest_username ??
-            basePoll?.guestUsername ??
-            result.poll.ownerUsername ??
-            result.poll.guestUsername ??
-            "Guest",
-          createdBy:
-            basePoll?.owner_id ??
-            basePoll?.createdBy ??
-            result.poll.createdBy,
-          guestId:
-            basePoll?.guest_id ??
-            basePoll?.guestId ??
-            result.poll.guestId ??
-            null,
-          guestUsername:
-            basePoll?.guest_username ??
-            basePoll?.guestUsername ??
-            result.poll.guestUsername ??
-            "Guest",
-          isPublic:
-            basePoll?.is_public ??
-            basePoll?.isPublic ??
-            result.poll.isPublic ??
-            false,
-        };
-      });
-
-    const filteredPolls = pollsWithMeta.filter((poll) => {
-      if (currentPollCategory === "public") {
-        return Boolean(poll.isPublic);
-      }
-
-      return !Boolean(poll.isPublic);
-    });
-
-    syncPollHeadings();
-
-    if (filteredPolls.length === 0) {
-      pollsListEl.innerHTML = `<p class="subtitle">No polls available right now.</p>`;
-      return;
-    }
-
-    pollsListEl.innerHTML = filteredPolls.map(renderPollCard).join("");
-    bindVoteButtons();
-    bindDeletePollButtons();
+    renderPollsList(pollsWithMeta);
   } catch (error) {
     pollsListEl.innerHTML = `<p class="subtitle">${escapeHtml(
       error.message || "Failed to load polls.",
@@ -691,6 +757,7 @@ function bindLoginForm() {
 
     try {
       await userStore.login({ username, password });
+      invalidatePollsCache();
       closeAccountMenu();
       showAppView("home");
       loginForm.reset();
@@ -699,6 +766,8 @@ function bindLoginForm() {
     }
   });
 }
+
+// 
 
 function bindSignupForm() {
   document.addEventListener("user-create-submit", async (event) => {
@@ -728,8 +797,13 @@ function bindSignupForm() {
         tosAccepted: consent,
       });
 
-      showMessage(signupErrorEl, "");
+      // ✅ FIX: vis melding i login-panelet
       activateAuthTab("login");
+      showMessage(
+        loginErrorEl,
+        "Account created successfully. Please log in.",
+      );
+
       form?.reset();
     } catch (error) {
       showMessage(signupErrorEl, error.message || "Failed to sign up.");
@@ -776,6 +850,7 @@ function bindProfileForm() {
 
     try {
       await userStore.deleteMe();
+      invalidatePollsCache();
     } catch (error) {
       showMessage(profileErrorEl, error.message || "Failed to delete account.");
     }
@@ -834,7 +909,8 @@ function bindCreatePollForm() {
 
       createPollForm.reset();
       syncCreatePollVisibility();
-      showMessage(createPollMessageEl, "Poll created successfully.");
+
+      invalidatePollsCache();
 
       if (isPublic) {
         showAppView("public-polls");

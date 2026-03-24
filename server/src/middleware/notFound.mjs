@@ -1,11 +1,5 @@
-﻿// middleware/notFound.mjs
-
-export default function notFound(req, res, next) {
-  const message = req.t
-    ? req.t("errors.notFound")
-    : "The requested resource was not found.";
-
+﻿export default function notFound(req, res) {
   res.status(404).json({
-    error: message
+    error: req.t?.("errors.notFound") || "Not found",
   });
 }

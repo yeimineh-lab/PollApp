@@ -26,7 +26,7 @@ export async function login({ username, password }) {
 
   // Create a new session token for the authenticated user
   const token = crypto.randomBytes(32).toString("hex");
-  createSession(token, user.id);
+  await createSession(token, user.id);
 
   return {
     token,
@@ -55,6 +55,6 @@ export async function me({ userId }) {
 
 // Log out the current user by deleting the session token
 export async function logout({ token }) {
-  deleteSession(token);
+  await deleteSession(token);
   return { ok: true };
 }

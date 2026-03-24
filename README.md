@@ -1,25 +1,35 @@
 ﻿## PollApp
 
-A simple REST-based poll application built with **Node.js** and **Express**, using **ES Modules (ESM only)**.
+A REST-based poll application built with Node.js, Express, and PostgreSQL using ES Modules (ESM only).
 
 ---
 
 ## Features
 
-Users can:
+The application supports both guest users and registered users.
 
-- Create an account  
-- Log in and log out  
-- Create polls  
-- View polls  
-- Vote on polls  
-- Delete their own account  
+### Guests can:
+- Create polls
+- Vote on polls
+- Delete their own polls
+
+### Registered users can:
+- Create an account
+- Log in and log out
+- Create polls
+- View both public and community polls
+- Vote on polls
+- Delete their own polls
+
+### Poll types:
+- Public polls → visible to everyone
+- Community polls → visible only to logged-in users
 
 ---
 
 ## Tech Stack
 
-- Node.js (ESM only — no CommonJS)
+- Node.js (ES Modules only)
 - Express
 - PostgreSQL (pg)
 - REST API
@@ -38,141 +48,86 @@ PollApp/
 │   │   ├── routes/
 │   │   ├── services/
 │   │   ├── storage/
-│   │   ├── auth/
 │   │   ├── middleware/
-│   │   ├── domain/
-│   │   └── config/
+│   │   ├── config/
+│   │   └── utils/
 │   │
 │   ├── public/
-│   ├── data/
+│   │   ├── data/
+│   │   ├── ui/
+│   │   ├── i18n/
+│   │   └── icons/
+│   │
 │   ├── docs/
 │   │   └── openapi.yaml
 │   │
+│   ├── scripts/
 │   ├── package.json
 │   └── package-lock.json
 │
 ├── README.md
-└── .gitignore
-How to Run Locally
+└── .gitignore 
+
+
+
+## How to Run Locally
+
 cd server
 npm install
-npm start
+npm run dev
 
 Server runs at:
-
 http://localhost:3000
-API
 
+## API
 Base URL:
-
 http://localhost:3000/api/v1
 
-Health check:
+Example endpoints
+GET /polls
+POST /polls
+DELETE /polls/:id
+POST /polls/:id/vote
 
-GET /health
-Live Demo
-https://pollapp-1.onrender.com
-API Documentation
 
+## API Documentation
 OpenAPI specification:
-
 server/docs/openapi.yaml
-Architecture
 
-The application follows a layered architecture:
+## Architecture
+The application follows a layered structure:
 
 Routes
-
-Handles HTTP requests/responses
-
-No business logic
+Handles HTTP requests and responses.
 
 Services
-
-Core business logic
-
-Validation and rules
+Contains business logic and validation.
 
 Storage
-
-Data persistence (PostgreSQL / JSON)
+Handles database interaction (PostgreSQL).
 
 Middleware
-
-Authentication
-
-Error handling
-
-Domain
-
-Custom error classes (AppError, etc.)
+Handles authentication, validation, and error handling.
 
 Progressive Web App (PWA)
-
 The frontend is implemented as a PWA.
 
 Features:
-
-Installable application
-
+Installable
 Offline support
-
-Fast loading with caching
-
-Service Worker
-
-The service worker caches:
-
-HTML
-
-CSS
-
-JavaScript
-
-Manifest
-
-Icons
-
-Strategy:
-
-Cache-first for static assets
-
-Network-first for navigation
-
-Offline fallback page
-
-Offline Mode
-
-When offline:
-
-Cached files are served
-
-offline.html is shown for navigation requests
-
-Internationalization (I18n)
+Caching via Service Worker
+Internationalization (i18n)
 
 Supports:
-
 English
-
 Norwegian
 
 Features:
+Detects browser language
+Translates UI and error messages
 
-Auto-detects browser language
+Accessibility
+Tested with Lighthouse:
 
-Dynamic UI translations
-
-Server respects Accept-Language
-
-Accessibility & Quality
-
-Tested using Lighthouse:
-
-Performance: 100
-
-Accessibility: 100
-
-Best Practices: 100
-
-SEO: 90
+Accessibility: 90+
+Performance: 90+

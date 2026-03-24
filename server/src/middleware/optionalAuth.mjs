@@ -1,12 +1,12 @@
 import { getSessionUserId } from "../services/sessions.service.mjs";
+import { getBearerToken } from "../utils/authUtils.mjs";
 
 export function optionalAuth() {
   return async (req, _res, next) => {
     try {
-      const header = req.headers.authorization || "";
-      const [type, token] = header.split(" ");
+      const token = getBearerToken(req);
 
-      if (type === "Bearer" && token) {
+      if (token) {
         const userId = await getSessionUserId(token);
 
         if (userId) {

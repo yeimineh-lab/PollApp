@@ -3,7 +3,7 @@ openapi: 3.0.3
 info:
   title: Simple Poll API
   version: 1.0.0
-  description: REST API for user authentication and poll management.
+  description: REST API for user authentication, users, polls, and voting.
 
 servers:
   - url: http://localhost:3000
@@ -11,20 +11,22 @@ servers:
 
 tags:
   - name: Health
-    description: Health check endpoints
+    description: Health check endpoint
   - name: Auth
     description: Authentication and session handling
   - name: Users
     description: User management
   - name: Polls
-    description: Poll creation and voting
+    description: Poll listing, creation, deletion, and results
+  - name: Votes
+    description: Voting on polls
 
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT
+      bearerFormat: token
 
   responses:
     BadRequest:
@@ -41,6 +43,13 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
 
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
     NotFound:
       description: Resource not found
       content:
@@ -49,7 +58,7 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
 
     Conflict:
-      description: Resource conflict (e.g. username already exists)
+      description: Resource conflict
       content:
         application/json:
           schema:
@@ -68,8 +77,9 @@ components:
       properties:
         error:
           type: string
-          example: "Something went wrong"
-      required: [error]
+          example: Something went wrong
+      required:
+        - error
 
     OkResponse:
       type: object
@@ -77,7 +87,8 @@ components:
         ok:
           type: boolean
           example: true
-      required: [ok]
+      required:
+        - ok
 
     Consent:
       type: object
@@ -98,21 +109,58 @@ components:
         - privacyAcceptedAt
         - privacyVersion
 
+    UserRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 256375c5-7f8c-4661-a83e-a5838b363196
+        username:
+          type: string
+          example: test1
+        created_at:
+          type: string
+          format: date-time
+        consent:
+          $ref: "#/components/schemas/Consent"
+      required:
+        - id
+        - username
+        - created_at
+        - consent
+
     UserPublic:
       type: object
       properties:
         id:
           type: string
-          example: "256375c5-7f8c-4661-a83e-a5838b363196"
+          example: 256375c5-7f8c-4661-a83e-a5838b363196
         username:
           type: string
-          example: "test1"
+          example: test1
         createdAt:
           type: string
           format: date-time
         consent:
           $ref: "#/components/schemas/Consent"
-      required: [id, username, createdAt, consent]
+      required:
+        - id
+        - username
+        - createdAt
+        - consent
+
+    LoginUser:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 256375c5-7f8c-4661-a83e-a5838b363196
+        username:
+          type: string
+          example: test1
+      required:
+        - id
+        - username
 
     CreateUserRequest:
       type: object
@@ -120,15 +168,18 @@ components:
         username:
           type: string
           minLength: 3
-          example: "test1"
+          example: test1
         password:
           type: string
-          minLength: 6
-          example: "supersecret123"
+          minLength: 8
+          example: supersecret123
         tosAccepted:
           type: boolean
           example: true
-      required: [username, password, tosAccepted]
+      required:
+        - username
+        - password
+        - tosAccepted
 
     UpdateMeRequest:
       type: object
@@ -136,10 +187,10 @@ components:
       properties:
         username:
           type: string
-          example: "newname"
+          example: newname
         password:
           type: string
-          example: "newsecret123"
+          example: newsecret123
       additionalProperties: false
 
     LoginRequest:
@@ -147,73 +198,66 @@ components:
       properties:
         username:
           type: string
-          example: "test1"
+          example: test1
         password:
           type: string
-          example: "supersecret123"
-      required: [username, password]
+          example: supersecret123
+      required:
+        - username
+        - password
 
     LoginResponse:
       type: object
       properties:
         token:
           type: string
-          example: "jwt.token.here"
+          example: 3af6c1cdb5d1d9d8bfb2b6d441f4d44727d4d7113c1cce2d8f7d9d2e44f0a1bc
         user:
-          $ref: "#/components/schemas/UserPublic"
-      required: [token, user]
+          $ref: "#/components/schemas/LoginUser"
+      required:
+        - token
+        - user
 
-    PollOption:
+    PollListItem:
       type: object
       properties:
         id:
-          type: string
-          example: "opt_1"
-        text:
-          type: string
-          example: "Pizza"
-        votes:
           type: integer
-          minimum: 0
-          example: 0
-      required: [id, text, votes]
-
-    Poll:
-      type: object
-      properties:
-        id:
-          type: string
-          example: "poll_123"
-        title:
-          type: string
-          example: "What should we eat?"
-        options:
-          type: array
-          items:
-            $ref: "#/components/schemas/PollOption"
-        createdAt:
-          type: string
-          format: date-time
-        ownerId:
+          example: 27
+        owner_id:
           type: string
           nullable: true
-        ownerUsername:
+          example: dfbf4e44-6d1d-4a08-9f60-700d81f2116a
+        guest_id:
           type: string
-          example: "test1"
-      required: [id, title, options, createdAt, ownerId, ownerUsername]
-
-    CreatePollRequest:
-      type: object
-      properties:
+          nullable: true
+          example: 6523021e-a881-41f8-910b-32396f6be10f
+        guest_username:
+          type: string
+          nullable: true
+          example: guest1
         title:
           type: string
-          example: "What should we eat?"
-        options:
-          type: array
-          items:
-            type: string
-            example: "Pizza"
-      required: [title, options]
+          example: Best team in Premier League?
+        description:
+          type: string
+          example: Arsenal | Liverpool | Manchester United | Manchester City
+        created_at:
+          type: string
+          format: date-time
+        is_public:
+          type: boolean
+          example: true
+        owner_username:
+          type: string
+          nullable: true
+          example: test1
+      required:
+        - id
+        - title
+        - description
+        - created_at
+        - is_public
 
     ListPollsResponse:
       type: object
@@ -221,20 +265,231 @@ components:
         polls:
           type: array
           items:
-            $ref: "#/components/schemas/Poll"
-      required: [polls]
+            $ref: "#/components/schemas/PollListItem"
+      required:
+        - polls
+
+    CreatePollRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: What should we eat?
+        options:
+          type: array
+          items:
+            type: string
+            example: Pizza
+        isPublic:
+          type: boolean
+          example: true
+        guestId:
+          type: string
+          description: Required for guest-created polls
+          example: 6523021e-a881-41f8-910b-32396f6be10f
+        guestUsername:
+          type: string
+          example: guest1
+      required:
+        - title
+        - options
+
+    CreatedPoll:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 28
+        owner_id:
+          type: string
+          nullable: true
+        guest_id:
+          type: string
+          nullable: true
+        guest_username:
+          type: string
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          example: Pizza | Sushi | Burger
+        is_public:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        guestId:
+          type: string
+          nullable: true
+        guestUsername:
+          type: string
+          nullable: true
+      required:
+        - id
+        - title
+        - description
+        - is_public
+        - created_at
 
     CreatePollResponse:
       type: object
       properties:
         poll:
-          $ref: "#/components/schemas/Poll"
-      required: [poll]
+          $ref: "#/components/schemas/CreatedPoll"
+      required:
+        - poll
+
+    PollResultOption:
+      type: object
+      properties:
+        optionIndex:
+          type: integer
+          example: 0
+        text:
+          type: string
+          example: Pizza
+        votes:
+          type: integer
+          example: 3
+      required:
+        - optionIndex
+        - text
+        - votes
+
+    PollResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 27
+        title:
+          type: string
+          example: What should we eat?
+        isPublic:
+          type: boolean
+          example: true
+        createdBy:
+          type: string
+          nullable: true
+          example: dfbf4e44-6d1d-4a08-9f60-700d81f2116a
+        guestId:
+          type: string
+          nullable: true
+          example: 6523021e-a881-41f8-910b-32396f6be10f
+        guestUsername:
+          type: string
+          nullable: true
+          example: guest1
+        ownerUsername:
+          type: string
+          example: test1
+        userVote:
+          type: integer
+          nullable: true
+          example: 1
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/PollResultOption"
+      required:
+        - id
+        - title
+        - isPublic
+        - ownerUsername
+        - userVote
+        - options
+
+    PollResultsResponse:
+      type: object
+      properties:
+        poll:
+          $ref: "#/components/schemas/PollResult"
+      required:
+        - poll
+
+    DeletePollResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        poll:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 27
+            title:
+              type: string
+              example: What should we eat?
+            createdBy:
+              type: string
+              nullable: true
+              example: dfbf4e44-6d1d-4a08-9f60-700d81f2116a
+            guestId:
+              type: string
+              nullable: true
+              example: 6523021e-a881-41f8-910b-32396f6be10f
+            ownerUsername:
+              type: string
+              example: test1
+          required:
+            - id
+            - title
+            - ownerUsername
+      required:
+        - ok
+        - poll
+
+    VoteRequest:
+      type: object
+      properties:
+        optionIndex:
+          type: integer
+          minimum: 0
+          example: 1
+        guestId:
+          type: string
+          description: Required for guest voting
+          example: 6523021e-a881-41f8-910b-32396f6be10f
+      required:
+        - optionIndex
+
+    VoteRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 12
+        poll_id:
+          type: integer
+          example: 27
+        user_id:
+          type: string
+          nullable: true
+          example: dfbf4e44-6d1d-4a08-9f60-700d81f2116a
+        guest_id:
+          type: string
+          nullable: true
+          example: 6523021e-a881-41f8-910b-32396f6be10f
+        option_index:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - poll_id
+        - option_index
+        - created_at
 
 paths:
   /health:
     get:
-      tags: [Health]
+      tags:
+        - Health
       summary: Health check
       responses:
         "200":
@@ -248,7 +503,8 @@ paths:
 
   /api/v1/auth/login:
     post:
-      tags: [Auth]
+      tags:
+        - Auth
       summary: Login user
       requestBody:
         required: true
@@ -268,8 +524,9 @@ paths:
 
   /api/v1/auth/me:
     get:
-      tags: [Auth]
-      summary: Get current user
+      tags:
+        - Auth
+      summary: Get current authenticated user
       security:
         - bearerAuth: []
       responses:
@@ -281,11 +538,14 @@ paths:
                 $ref: "#/components/schemas/UserPublic"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /api/v1/auth/logout:
     post:
-      tags: [Auth]
-      summary: Logout user
+      tags:
+        - Auth
+      summary: Logout current user
       security:
         - bearerAuth: []
       responses:
@@ -299,8 +559,27 @@ paths:
           $ref: "#/components/responses/Unauthorized"
 
   /api/v1/users:
+    get:
+      tags:
+        - Users
+      summary: Get all registered users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of registered users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserPublic"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
     post:
-      tags: [Users]
+      tags:
+        - Users
       summary: Create a new user
       requestBody:
         required: true
@@ -314,7 +593,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserPublic"
+                $ref: "#/components/schemas/UserRecord"
         "400":
           $ref: "#/components/responses/BadRequest"
         "409":
@@ -322,7 +601,8 @@ paths:
 
   /api/v1/users/me:
     patch:
-      tags: [Users]
+      tags:
+        - Users
       summary: Update current user
       security:
         - bearerAuth: []
@@ -338,12 +618,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserPublic"
+                $ref: "#/components/schemas/UserRecord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
     delete:
-      tags: [Users]
+      tags:
+        - Users
       summary: Delete current user
       security:
         - bearerAuth: []
@@ -359,8 +646,12 @@ paths:
 
   /api/v1/polls:
     get:
-      tags: [Polls]
-      summary: Get all polls
+      tags:
+        - Polls
+      summary: Get polls
+      description: >
+        This endpoint is public. If called without authentication, only public polls
+        are returned. If called with a valid bearer token, all polls are returned.
       responses:
         "200":
           description: List of polls
@@ -370,10 +661,12 @@ paths:
                 $ref: "#/components/schemas/ListPollsResponse"
 
     post:
-      tags: [Polls]
-      summary: Create a new poll
-      security:
-        - bearerAuth: []
+      tags:
+        - Polls
+      summary: Create a poll
+      description: >
+        This endpoint supports both authenticated users and guests. Guests must send
+        guestId in the request body.
       requestBody:
         required: true
         content:
@@ -387,5 +680,104 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CreatePollResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/polls/{id}/results:
+    get:
+      tags:
+        - Polls
+      summary: Get poll results
+      description: >
+        This endpoint is public for public polls. Community polls require an
+        authenticated user. Guests can send guestId as a query parameter to get
+        their own vote back in userVote.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: guestId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Poll results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PollResultsResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/polls/{id}:
+    delete:
+      tags:
+        - Polls
+      summary: Delete a poll
+      description: >
+        This endpoint supports both authenticated users and guests. Guests must send
+        guestId as a query parameter. A user or guest can only delete their own poll.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: guestId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Poll deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeletePollResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/polls/{id}/vote:
+    post:
+      tags:
+        - Votes
+      summary: Vote on a poll
+      description: >
+        This endpoint supports both authenticated users and guests. Guests must send
+        guestId in the request body.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoteRequest"
+      responses:
+        "201":
+          description: Vote created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoteRecord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"

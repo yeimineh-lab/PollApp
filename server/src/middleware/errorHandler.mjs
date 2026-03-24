@@ -1,17 +1,20 @@
-﻿export default function errorHandler(error, req, res, next) {
-  console.error(error);
+﻿export default function errorHandler(err, req, res, _next) {
+  const status = err.status || 500;
 
-  const status = error.status ?? 500;
-
-  let message;
-
-  if (status >= 500) {
-    message = req.t ? req.t("errors.serverError") : "Internal server error";
-  } else {
-    message =
-      error.message ||
-      (req.t ? req.t("errors.invalidInput") : "Unexpected error");
+  if (res.headersSent) {
+    return;
   }
 
-  res.status(status).json({ error: message });
+  if (status >= 500) {
+    console.error(err);
+  }
+
+  const fallbackMessage =
+    status === 500
+      ? req.t?.("errors.internal") || "Internal server error"
+      : err.message || "Error";
+
+  res.status(status).json({
+    error: fallbackMessage,
+  });
 }
