@@ -7,7 +7,7 @@
 
 import express from "express";
 import * as pollsService from "../services/polls.service.mjs";
-import optionalAuth from "../middleware/optionalAuth.mjs";
+import { optionalAuth } from "../middleware/optionalAuth.mjs";
 
 const router = express.Router();
 
