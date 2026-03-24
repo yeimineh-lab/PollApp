@@ -6,46 +6,76 @@
  * and updates cached files when a new version is available.
  */
 
-const CACHE_NAME = "poll-app-static-v3";
+const CACHE_NAME = "poll-app-static-v9";
 
 const APP_SHELL_FILES = [
   "/",
   "/index.html",
+  "/favicon.ico",
   "/app.css",
   "/app.mjs",
+
+  "/data/api.mjs",
+  "/data/userStore.mjs",
+
+  "/i18n/index.mjs",
+  "/i18n/en.mjs",
+  "/i18n/no.mjs",
+
+  "/ui/user-create.mjs",
+  "/ui/user-edit.mjs",
+  "/ui/user-delete.mjs",
 ];
 
 const STATIC_ASSETS = [
   "/offline.html",
   "/manifest.webmanifest",
+  "/privacy.html",
+  "/terms.html",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
+
+const PRECACHE_URLS = [...APP_SHELL_FILES, ...STATIC_ASSETS];
 
 function isStaticAsset(pathname) {
   return STATIC_ASSETS.includes(pathname);
 }
 
-function isAppShell(pathname) {
-  return APP_SHELL_FILES.includes(pathname);
+function shouldRuntimeCache(request, pathname) {
+  return (
+    request.destination === "script" ||
+    request.destination === "style" ||
+    request.destination === "document" ||
+    request.destination === "image" ||
+    pathname.endsWith(".mjs") ||
+    pathname.endsWith(".js") ||
+    pathname.endsWith(".css") ||
+    pathname.endsWith(".html") ||
+    pathname.endsWith(".png") ||
+    pathname.endsWith(".ico") ||
+    pathname.endsWith(".webmanifest")
+  );
 }
 
-/*
-Install
-*/
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      cache.addAll([...APP_SHELL_FILES, ...STATIC_ASSETS])
-    )
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      for (const url of PRECACHE_URLS) {
+        try {
+          await cache.add(url);
+        } catch (err) {
+          console.warn("Failed to cache:", url, err);
+        }
+      }
+    })()
   );
 
   self.skipWaiting();
 });
 
-/*
-Activate
-*/
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
@@ -62,18 +92,12 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-/*
-Allow force update from client
-*/
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
 });
 
-/*
-Fetch
-*/
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
@@ -83,14 +107,11 @@ self.addEventListener("fetch", (event) => {
 
   if (url.origin !== self.location.origin) return;
 
-  // Never cache API responses.
+
   if (url.pathname.startsWith("/api/")) return;
 
-  /*
-  App shell and navigation
-  -> network first
-  */
-  if (request.mode === "navigate" || isAppShell(url.pathname)) {
+
+  if (request.mode === "navigate") {
     event.respondWith(
       (async () => {
         try {
@@ -99,15 +120,18 @@ self.addEventListener("fetch", (event) => {
           cache.put(request, fresh.clone());
           return fresh;
         } catch {
-          const cached = await caches.match(request);
-          const offline = await caches.match("/offline.html");
+          const cachedPage =
+            (await caches.match(request)) ||
+            (await caches.match("/")) ||
+            (await caches.match("/index.html")) ||
+            (await caches.match("/offline.html"));
 
           return (
-            cached ||
-            offline ||
+            cachedPage ||
             new Response("Offline", {
               status: 503,
               statusText: "Offline",
+              headers: { "Content-Type": "text/plain; charset=utf-8" },
             })
           );
         }
@@ -116,11 +140,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  /*
-  Static files
-  -> cache first
-  */
-  if (isStaticAsset(url.pathname)) {
+  // Static/module/style/image files:
+  if (isStaticAsset(url.pathname) || shouldRuntimeCache(request, url.pathname)) {
     event.respondWith(
       (async () => {
         const cached = await caches.match(request);
@@ -128,12 +149,18 @@ self.addEventListener("fetch", (event) => {
 
         try {
           const response = await fetch(request);
-          const cache = await caches.open(CACHE_NAME);
-          cache.put(request, response.clone());
+
+          if (response && response.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, response.clone());
+          }
+
           return response;
         } catch {
           return new Response("Offline", {
             status: 503,
+            statusText: "Offline",
+            headers: { "Content-Type": "text/plain; charset=utf-8" },
           });
         }
       })()
