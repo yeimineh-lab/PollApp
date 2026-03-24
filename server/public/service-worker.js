@@ -1,3 +1,11 @@
+/**
+ * Service worker.
+ *
+ * Caches the app shell and static assets,
+ * supports offline fallback,
+ * and updates cached files when a new version is available.
+ */
+
 const CACHE_NAME = "poll-app-static-v3";
 
 const APP_SHELL_FILES = [
@@ -23,7 +31,7 @@ function isAppShell(pathname) {
 }
 
 /*
-INSTALL
+Install
 */
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -36,7 +44,7 @@ self.addEventListener("install", (event) => {
 });
 
 /*
-ACTIVATE
+Activate
 */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
@@ -55,7 +63,7 @@ self.addEventListener("activate", (event) => {
 });
 
 /*
-ALLOW FORCE UPDATE FROM CLIENT
+Allow force update from client
 */
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") {
@@ -64,7 +72,7 @@ self.addEventListener("message", (event) => {
 });
 
 /*
-FETCH
+Fetch
 */
 self.addEventListener("fetch", (event) => {
   const { request } = event;
@@ -75,12 +83,12 @@ self.addEventListener("fetch", (event) => {
 
   if (url.origin !== self.location.origin) return;
 
-  // aldri cache API
+  // Never cache API responses.
   if (url.pathname.startsWith("/api/")) return;
 
   /*
-  APP SHELL + NAVIGATION
-  -> network first (gir fresh side)
+  App shell and navigation
+  -> network first
   */
   if (request.mode === "navigate" || isAppShell(url.pathname)) {
     event.respondWith(
@@ -109,7 +117,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   /*
-  STATIC FILES
+  Static files
   -> cache first
   */
   if (isStaticAsset(url.pathname)) {

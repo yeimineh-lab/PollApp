@@ -83,7 +83,7 @@ export async function createUser(input) {
 // Delete the authenticated user
 export async function deleteMe({ userId, token }) {
   await deleteUserById(userId);
-  deleteSession(token);
+  await deleteSession(token);
 
   return { ok: true };
 }

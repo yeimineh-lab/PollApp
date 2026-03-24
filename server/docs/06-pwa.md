@@ -4,7 +4,7 @@
 
 The application includes support for Progressive Web App (PWA), basic internationalization (i18n), and accessibility improvements.
 
-These features improve usability and user experience.
+These features improve usability and overall user experience.
 
 ---
 
@@ -17,7 +17,7 @@ This includes:
 - a service worker
 - offline support
 
-The service worker is responsible for caching important resources such as:
+The service worker caches important resources such as:
 - HTML
 - JavaScript
 - CSS
@@ -40,9 +40,11 @@ The application supports multiple languages:
 
 Translations are handled in the `i18n` folder on the client.
 
-The language is selected based on the browser settings.
+The language is selected based on the browser settings, for example through `navigator.language`.
 
 The UI text is updated dynamically depending on the selected language.
+
+The server can also use the `Accept-Language` header to return translated messages.
 
 ---
 
