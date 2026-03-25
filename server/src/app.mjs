@@ -51,7 +51,13 @@ app.use(
   }),
 );
 
+// Health check for hosting / monitoring
 app.get("/health", (req, res) => {
+  res.json({ ok: true });
+});
+
+// Health check under API version
+app.get("/api/v1/health", (req, res) => {
   res.json({ ok: true });
 });
 
