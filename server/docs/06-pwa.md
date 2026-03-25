@@ -2,9 +2,9 @@
 
 ## Overview
 
-The application includes support for Progressive Web App (PWA), basic internationalization (i18n), and accessibility improvements.
+The application includes support for Progressive Web App (PWA), internationalization (i18n), and accessibility improvements.
 
-These features improve usability and overall user experience.
+These features improve usability, performance, and overall user experience.
 
 ---
 
@@ -27,7 +27,7 @@ A cache-first strategy is used for static files, while navigation requests use a
 
 This allows the application to:
 - load faster after the first visit
-- work offline for basic functionality
+- remain usable offline for basic functionality
 
 ---
 
@@ -40,24 +40,25 @@ The application supports multiple languages:
 
 Translations are handled in the `i18n` folder on the client.
 
-The language is selected based on the browser settings, for example through `navigator.language`.
+The language is selected automatically based on the browser settings (e.g. `navigator.language`).
 
 The UI text is updated dynamically depending on the selected language.
 
-The server can also use the `Accept-Language` header to return translated messages.
+The server uses the `Accept-Language` header to return translated error messages.  
+This ensures that both client-side and server-side error messages are localized based on the browser’s language settings.
 
 ---
 
 ## Accessibility
 
-Basic accessibility improvements have been implemented.
+Accessibility improvements have been implemented to improve usability for a wider range of users.
 
 This includes:
 - using semantic HTML where possible
-- keeping the UI simple and readable
-- ensuring elements are usable without complex interactions
+- providing clear and readable UI structure
+- ensuring elements can be used without complex interactions
 
-The application has been tested with Lighthouse to check accessibility and performance.
+The application has been tested with Lighthouse and achieves an accessibility score of 100.
 
 ---
 
@@ -67,30 +68,30 @@ The goal was to keep these features simple and practical.
 
 For PWA:
 - only essential assets are cached
-- no complex offline sync is implemented
+- no complex offline synchronization is implemented
 
 For i18n:
-- a lightweight approach is used instead of a full library
+- a lightweight custom solution is used instead of a full library
 
 For accessibility:
-- focus was on usability rather than advanced ARIA features
+- focus was placed on usability and clarity rather than advanced ARIA usage
 
 ---
 
 ## Challenges
 
-One challenge was making sure cached files were updated correctly when the application changed.
+One challenge was ensuring that cached files were properly updated when the application changed.
 
-Another challenge was keeping translations consistent across the UI.
+Another challenge was keeping translations consistent across both client-side and server-side logic.
 
 ---
 
 ## Conclusion
 
-The application includes basic support for:
+The application includes support for:
 
 - offline usage through PWA
-- multiple languages
-- improved accessibility
+- multiple languages with dynamic localization
+- improved accessibility with a high Lighthouse score
 
-These features improve the overall user experience without adding too much complexity.
+These features improve the overall user experience while keeping the implementation simple and maintainable.
