@@ -45,9 +45,9 @@ Authentication state is handled in `userStore.mjs`.
 
 The client stores the login token in `localStorage` so the user can remain logged in after page reload.
 
-The client also stores a `guestId` in `localStorage`. This is used to identify guest-created polls and guest votes in the current browser.
+The client also stores a `guestId` in `localStorage`. This is used to identify guest-related actions in the current browser, such as voting or interacting with polls.
 
-Because of this, guest ownership is not account-based. It depends on the browser storage still being available.
+Because of this, guest behavior is tied to the browser and not to an account.
 
 ---
 
@@ -57,9 +57,10 @@ User state includes:
 
 - current user
 - authentication token
-- loading and error state
+- loading state
+- error state
 
-The client also keeps a short in-memory cache for poll lists to avoid unnecessary repeated requests.
+Poll data is fetched from the API when needed instead of being stored in a persistent in-memory cache.
 
 ---
 
@@ -87,9 +88,9 @@ Examples:
 
 The client is implemented without a frontend framework.
 
-This keeps the project small and makes it easier to show how the frontend connects directly to the REST API.
+This keeps the project simple and makes it easier to show how the frontend connects directly to the REST API.
 
-Another design choice was to keep most UI flow in `app.mjs` while still separating API logic, auth state, and reusable UI components into their own modules.
+Another design choice was to keep most UI logic in `app.mjs`, while separating API logic, user state, and UI components into different modules.
 
 ---
 
@@ -102,7 +103,7 @@ One challenge was keeping the UI updated after actions like:
 - deleting polls
 - logging in and out
 
-This was solved by reloading data and re-rendering the relevant parts of the interface after each action.
+This was handled by reloading data and updating the UI after each action.
 
 Another challenge was handling both guest state and authenticated state in a consistent way.
 
@@ -116,5 +117,5 @@ It:
 
 - communicates with the backend API
 - supports both guests and registered users
-- uses browser storage for login and guest behavior
-- updates dynamically based on state
+- uses browser storage for authentication and guest behavior
+- updates dynamically based on application state
