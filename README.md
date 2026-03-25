@@ -1,6 +1,16 @@
-﻿## PollApp
+﻿# PollApp
 
 A REST-based poll application built with Node.js, Express, and PostgreSQL using ES Modules (ESM only).
+
+---
+
+## Live Demo
+
+The application is deployed here:
+
+https://pollapp-1.onrender.com/
+
+Note: The server may take a few seconds to start if it has been inactive.
 
 ---
 
@@ -10,93 +20,89 @@ The application supports both guest users and registered users.
 
 ### Guests can:
 
-* View public polls
-* Vote on polls
+* View public polls  
+* Vote on polls  
 
 ### Registered users can:
 
-* Create an account
-* Log in and log out
-* Create polls
-* View both public and community polls
-* Vote on polls
-* Delete their own polls
+* Create an account  
+* Log in and log out  
+* Create polls  
+* View both public and community polls  
+* Vote on polls  
+* Delete their own polls  
 
 ### Poll types:
 
-* Public polls → visible to everyone
-* Community polls → visible only to logged-in users
+* Public polls → visible to everyone  
+* Community polls → visible only to logged-in users  
 
 ---
 
 ## Tech Stack
 
-* Node.js (ES Modules only)
-* Express
-* PostgreSQL (pg)
-* REST API
-* OpenAPI 3
+* Node.js (ES Modules only)  
+* Express  
+* PostgreSQL (pg)  
+* REST API  
+* OpenAPI 3  
 
 ---
 
 ## Project Structure
 
-```
-PollApp/
-├── server/
-│   ├── src/
-│   │   ├── app.mjs
-│   │   ├── server.mjs
-│   │   ├── routes/
-│   │   ├── services/
-│   │   ├── storage/
-│   │   ├── middleware/
-│   │   ├── config/
-│   │   └── utils/
-│   │
-│   ├── public/
-│   │   ├── data/
-│   │   ├── ui/
-│   │   ├── i18n/
-│   │   └── icons/
-│   │
-│   ├── docs/
-│   │   └── openapi.yaml
-│   │
-│   ├── scripts/
-│   ├── package.json
-│   └── package-lock.json
-│
-├── README.md
-└── .gitignore
-```
+    PollApp/
+    ├── server/
+    │   ├── src/
+    │   │   ├── app.mjs
+    │   │   ├── server.mjs
+    │   │   ├── routes/
+    │   │   ├── services/
+    │   │   ├── storage/
+    │   │   ├── middleware/
+    │   │   ├── config/
+    │   │   └── utils/
+    │   │
+    │   ├── public/
+    │   │   ├── data/
+    │   │   ├── ui/
+    │   │   ├── i18n/
+    │   │   └── icons/
+    │   │
+    │   ├── docs/
+    │   │   └── openapi.yaml
+    │   │
+    │   ├── scripts/
+    │   ├── package.json
+    │   └── package-lock.json
+    │
+    ├── README.md
+    └── .gitignore
 
 ---
 
 ## How to Run Locally
 
-```bash
-cd server
-npm install
-npm run dev
-```
+    cd server
+    npm install
+    npm run dev
 
-Server runs at:
+Server runs at:  
 http://localhost:3000
 
 ---
 
 ## API
 
-Base URL:
+Base URL:  
 http://localhost:3000/api/v1
 
 ### Example endpoints
 
-* GET /polls
-* POST /polls
-* DELETE /polls/:id
-* POST /polls/:id/vote
+* GET /polls  
+* POST /polls  
+* DELETE /polls/:id  
+* POST /polls/:id/vote  
 
 ---
 
@@ -110,7 +116,7 @@ Guest functionality depends on browser storage (`localStorage`).
 
 ## API Documentation
 
-OpenAPI specification:
+OpenAPI specification:  
 `server/docs/openapi.yaml`
 
 ---
@@ -119,17 +125,17 @@ OpenAPI specification:
 
 The application follows a layered structure:
 
-* **Routes**
-  Handle HTTP requests and responses
+* **Routes**  
+  Handle HTTP requests and responses  
 
-* **Services**
-  Contain business logic and validation
+* **Services**  
+  Contain business logic and validation  
 
-* **Storage**
-  Handle database interaction (PostgreSQL)
+* **Storage**  
+  Handle database interaction (PostgreSQL)  
 
-* **Middleware**
-  Handle authentication, basic request checks, and error handling
+* **Middleware**  
+  Handle authentication, request validation, and error handling  
 
 ---
 
@@ -139,9 +145,9 @@ The frontend is implemented as a PWA.
 
 Features:
 
-* Installable
-* Offline support
-* Service worker
+* Installable  
+* Offline support  
+* Service worker  
 
 ---
 
@@ -149,13 +155,13 @@ Features:
 
 Supports:
 
-* English
-* Norwegian
+* English  
+* Norwegian  
 
 Features:
 
-* Detects browser language
-* Translates UI and error messages
+* Detects browser language  
+* Translates UI and error messages  
 
 ---
 
