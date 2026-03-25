@@ -1,7 +1,7 @@
 /**
  * Authentication middleware.
  *
- * Ensures the request is authenticated.
+ * Ensures the request has a valid bearer token and session.
  */
 
 import { getSessionUserId } from "../services/sessions.service.mjs";
@@ -14,7 +14,9 @@ export function requireAuth() {
 
       if (!token) {
         return res.status(401).json({
-          error: "Missing or invalid Authorization header",
+          error:
+            req.t?.("errors.unauthorized") ||
+            "Missing or invalid Authorization header",
         });
       }
 
@@ -22,7 +24,7 @@ export function requireAuth() {
 
       if (!userId) {
         return res.status(401).json({
-          error: "Invalid session",
+          error: req.t?.("errors.unauthorized") || "Invalid session",
         });
       }
 

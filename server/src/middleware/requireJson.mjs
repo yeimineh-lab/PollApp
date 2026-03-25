@@ -1,7 +1,7 @@
 /**
- * JSON validation middleware.
+ * JSON content-type middleware.
  *
- * Ensures requests use application/json when required.
+ * Ensures requests that send a body use application/json.
  */
 
 export default function requireJson(req, res, next) {
@@ -11,11 +11,13 @@ export default function requireJson(req, res, next) {
     return next();
   }
 
-  const ct = req.headers["content-type"] || "";
+  const contentType = req.headers["content-type"] || "";
 
-  if (!ct.includes("application/json")) {
+  if (!contentType.includes("application/json")) {
     return res.status(415).json({
-      error: "Content-Type must be application/json",
+      error:
+        req.t?.("errors.invalidInput") ||
+        "Content-Type must be application/json",
     });
   }
 
