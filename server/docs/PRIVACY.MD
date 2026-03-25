@@ -1,6 +1,6 @@
 # Privacy
 
-The app stores only the data needed for login, creating polls and voting.
+The app only stores the data it needs to support creating polls and voting.
 
 ## Registered users
 
