@@ -237,7 +237,7 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Viktig: ikke global margin på ALLE knapper */
+
 .row button + button {
   margin-left: 8px;
 }
@@ -453,7 +453,7 @@ user-delete .row {
   margin-top: 1rem;
 }
 
-/* Header / premium top layout */
+
 
 .site-header {
   position: relative;
