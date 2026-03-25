@@ -2,13 +2,15 @@
 
 ## Purpose
 
-The purpose of the middleware layer in this project is to handle cross-cutting concerns such as:
+The purpose of the middleware layer in this project is to handle common functionality that is shared across multiple routes.
+
+This mainly includes:
 
 - Authentication
-- Request validation
+- Basic request checks
 - Error handling
 
-This allows the route handlers to stay simple and focused only on handling requests and returning responses.
+By using middleware, the route handlers can stay simpler and focus only on handling requests and returning responses, instead of repeating the same logic in multiple places.
 
 ---
 
@@ -16,17 +18,17 @@ This allows the route handlers to stay simple and focused only on handling reque
 
 ### optionalAuth
 
-This middleware checks if a request includes a valid Bearer token, but does not require it.
+This middleware checks if a request contains a Bearer token, but it does not require it.
 
-- If a valid token is present:
+- If a valid token is provided:
   - The user is identified
-  - `req.auth` is populated with `{ token, userId }`
-- If no token is present:
+  - `req.auth` is set with `{ token, userId }`
+- If no token is provided:
   - The request continues as a guest
 
-This is used for endpoints where both guests and authenticated users are allowed, such as:
+This is useful in PollApp because some endpoints allow both guests and logged-in users, for example:
 
-- Listing polls
+- Viewing polls
 - Voting
 - Creating polls
 
@@ -41,72 +43,65 @@ This middleware ensures that the user is authenticated.
 - If the token is invalid:
   - Returns `401 Unauthorized`
 - If valid:
-  - Adds `req.auth` with user information
+  - Adds user information to `req.auth`
 
-This is used for endpoints that should only be accessible to logged-in users.
+This is used for endpoints that should only be accessible to logged-in users, such as accessing or updating user-specific data.
 
 ---
 
 ### requireJson
 
-This middleware ensures that the request has the correct `Content-Type`.
+This middleware checks that the request has the correct `Content-Type`.
 
 - If the request is not `application/json`:
   - Returns an error
-- Prevents invalid or malformed requests
+
+This helps avoid issues where the server receives data in an unexpected format.
 
 ---
 
 ### errorHandler
 
-Centralized error handling middleware.
+This is a centralized error handling middleware.
 
-- Catches errors thrown in routes and services
-- Sends a consistent JSON response
-- Prevents server crashes
+- Catches errors from routes and services
+- Returns a consistent JSON response
+- Prevents the server from crashing
 
 ---
 
 ### notFound
 
-Handles requests to unknown routes.
+This middleware handles requests to routes that do not exist.
 
 - Returns a `404 Not Found` response
-- Ensures consistent API behavior
 
 ---
 
 ## Design Decisions
 
-The middleware layer is separated from routes to improve structure and maintainability.
+The middleware is separated from routes to keep the project more structured.
 
-- Routes handle HTTP logic only
-- Middleware handles shared concerns
-- Services handle business logic
+- Routes handle HTTP requests and responses
+- Middleware handles shared logic like authentication
+- Services handle business logic (for example validating poll data or user input)
 
-This separation makes the application easier to extend and debug.
+This makes the code easier to read and maintain.
 
 ---
 
 ## Challenges
 
-One challenge was handling both guests and authenticated users in the same endpoints.
+One challenge was supporting both guests and authenticated users in the same endpoints.
 
-This was solved by introducing `optionalAuth`, which allows the system to:
+In PollApp, users can vote and interact with polls without logging in, but some features still require authentication. This was solved by using `optionalAuth`, which allows both cases to work in the same route.
 
-- Support guest users without login
-- Still attach user data when available
-
-Another improvement was removing duplicated logic for extracting Bearer tokens by introducing a shared utility function.
+Another small challenge was handling Bearer tokens consistently. Instead of repeating the same logic in multiple places, a shared function was used to extract and validate tokens.
 
 ---
 
 ## Conclusion
 
-The middleware system ensures:
+The middleware layer helps keep the application organized by separating shared logic from route handling.
 
-- Clear separation of concerns
-- Reusable logic
-- Consistent request handling
-
-It plays a key role in making the application structured and maintainable.
+It makes the code easier to reuse, reduces duplication, and ensures that requests are handled in a consistent way across the application.
