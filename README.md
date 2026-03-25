@@ -91,9 +91,11 @@ POST /polls/:id/vote
 
 ## Notes
 
-The application requires PostgreSQL and a valid `DATABASE_URL` in the server environment.
+## Notes
 
-Guest functionality depends on browser storage. The app stores a guest identifier in `localStorage`, while logged-in users store their session token there.
+The app requires PostgreSQL and a valid DATABASE_URL.
+
+Guest functionality depends on browser storage (localStorage).
 
 ## API Documentation
 OpenAPI specification:
