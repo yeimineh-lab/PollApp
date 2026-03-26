@@ -8,7 +8,7 @@ A REST-based poll application built with Node.js, Express, and PostgreSQL using 
 
 The application is deployed here:
 
-https://pollapp-1.onrender.com/
+https://pollapp-wx67.onrender.com
 
 Note: The server may take a few seconds to start if it has been inactive.
 
