@@ -12,11 +12,6 @@ https://pollapp-wx67.onrender.com
 
 Note: The server may take a few seconds to start if it has been inactive.
 
----
-
-## Github
-
-https://github.com/yeimineh-lab/PollApp
 
 ---
 
